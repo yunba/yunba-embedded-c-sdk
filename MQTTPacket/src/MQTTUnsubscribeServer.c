@@ -31,7 +31,7 @@
   * @param buflen the length in bytes of the data in the supplied buffer
   * @return the length of the serialized data.  <= 0 indicates error
   */
-int MQTTDeserialize_unsubscribe(unsigned char* dup, unsigned short* packetid, int maxcount, int* count, MQTTString topicFilters[],
+int MQTTDeserialize_unsubscribe(unsigned char* dup, uint64_t* packetid, int maxcount, int* count, MQTTString topicFilters[],
 		unsigned char* buf, int len)
 {
 	MQTTHeader header = {0};
@@ -73,7 +73,7 @@ exit:
   * @param packetid integer - the MQTT packet identifier
   * @return the length of the serialized data.  <= 0 indicates error
   */
-int MQTTSerialize_unsuback(unsigned char* buf, int buflen, unsigned short packetid)
+int MQTTSerialize_unsuback(unsigned char* buf, int buflen, uint64_t packetid)
 {
 	MQTTHeader header = {0};
 	int rc = 0;

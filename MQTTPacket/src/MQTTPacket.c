@@ -155,6 +155,24 @@ void writeChar(unsigned char** pptr, char c)
 	(*pptr)++;
 }
 
+/**
+ * Writes an 32/64bit-integer as 4/8 bytes to an output buffer.
+ * @param pptr pointer to the output buffer - incremented by the number of bytes used & returned
+ * @param anInt the integer to write
+ */
+void writeInt32(char** pptr, uint32_t anInt)
+{
+    writeInt(pptr, (anInt >> 16));
+    writeInt(pptr, (anInt & 0xffff));
+}
+
+void writeInt64(char** pptr, uint64_t anInt)
+{
+    writeInt32(pptr, (anInt >> 32));
+    writeInt32(pptr, (anInt & 0xffffffff));
+}
+
+
 
 /**
  * Writes an integer as 2 bytes to an output buffer.

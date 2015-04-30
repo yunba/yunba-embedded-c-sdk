@@ -81,6 +81,10 @@ int MQTTSerialize_connect(unsigned char* buf, int buflen, MQTTPacket_connectData
 		writeCString(&ptr, "MQTT");
 		writeChar(&ptr, (char) 4);
 	}
+	else if (options->MQTTVersion == 0x19) {
+		writeCString(&ptr, "MQIsdp");
+		writeChar(&ptr, (char) 0x19);
+	}
 	else
 	{
 		writeCString(&ptr, "MQIsdp");

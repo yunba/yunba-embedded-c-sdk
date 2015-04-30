@@ -28,7 +28,7 @@ const char* MQTTPacket_names[] =
 };
 
 
-const char* MQTTPacket_getName(unsigned short packetid)
+const char* MQTTPacket_getName(uint64_t packetid)
 {
 	return MQTTPacket_names[packetid];
 }
@@ -66,7 +66,7 @@ int MQTTStringFormat_connack(char* strbuf, int strbuflen, unsigned char connack_
 
 
 int MQTTStringFormat_publish(char* strbuf, int strbuflen, unsigned char dup, int qos, unsigned char retained,
-		unsigned short packetid, MQTTString topicName, unsigned char* payload, int payloadlen)
+		uint64_t packetid, MQTTString topicName, unsigned char* payload, int payloadlen)
 {
 	int strindex = snprintf(strbuf, strbuflen,
 				"PUBLISH dup %d, QoS %d, retained %d, packet id %d, topic %.*s, payload length %d, payload %.*s",
@@ -77,7 +77,7 @@ int MQTTStringFormat_publish(char* strbuf, int strbuflen, unsigned char dup, int
 }
 
 
-int MQTTStringFormat_ack(char* strbuf, int strbuflen, unsigned char packettype, unsigned char dup, unsigned short packetid)
+int MQTTStringFormat_ack(char* strbuf, int strbuflen, unsigned char packettype, unsigned char dup, uint64_t packetid)
 {
 	int strindex = snprintf(strbuf, strbuflen, "%s, packet id %d", MQTTPacket_names[packettype], packetid);
 	if (dup)
@@ -86,7 +86,7 @@ int MQTTStringFormat_ack(char* strbuf, int strbuflen, unsigned char packettype, 
 }
 
 
-int MQTTStringFormat_subscribe(char* strbuf, int strbuflen, unsigned char dup, unsigned short packetid, int count,
+int MQTTStringFormat_subscribe(char* strbuf, int strbuflen, unsigned char dup, uint64_t packetid, int count,
 		MQTTString topicFilters[], int requestedQoSs[])
 {
 	return snprintf(strbuf, strbuflen,
@@ -97,14 +97,14 @@ int MQTTStringFormat_subscribe(char* strbuf, int strbuflen, unsigned char dup, u
 }
 
 
-int MQTTStringFormat_suback(char* strbuf, int strbuflen, unsigned short packetid, int count, int* grantedQoSs)
+int MQTTStringFormat_suback(char* strbuf, int strbuflen, uint64_t packetid, int count, int* grantedQoSs)
 {
 	return snprintf(strbuf, strbuflen,
 		"SUBACK packet id %d count %d granted qos %d", packetid, count, grantedQoSs[0]);
 }
 
 
-int MQTTStringFormat_unsubscribe(char* strbuf, int strbuflen, unsigned char dup, unsigned short packetid,
+int MQTTStringFormat_unsubscribe(char* strbuf, int strbuflen, unsigned char dup, uint64_t packetid,
 		int count, MQTTString topicFilters[])
 {
 	return snprintf(strbuf, strbuflen,
@@ -136,7 +136,7 @@ char* MQTTFormat_toClientString(char* strbuf, int strbuflen, unsigned char* buf,
 	case PUBLISH:
 	{
 		unsigned char dup, retained, *payload;
-		unsigned short packetid;
+		uint64_t packetid;
 		int qos, payloadlen;
 		MQTTString topicName = MQTTString_initializer;
 		if (MQTTDeserialize_publish(&dup, &qos, &retained, &packetid, &topicName,
@@ -151,14 +151,14 @@ char* MQTTFormat_toClientString(char* strbuf, int strbuflen, unsigned char* buf,
 	case PUBCOMP:
 	{
 		unsigned char packettype, dup;
-		unsigned short packetid;
+		uint64_t packetid;
 		if (MQTTDeserialize_ack(&packettype, &dup, &packetid, buf, buflen) == 1)
 			strindex = MQTTStringFormat_ack(strbuf, strbuflen, packettype, dup, packetid);
 	}
 	break;
 	case SUBACK:
 	{
-		unsigned short packetid;
+		uint64_t packetid;
 		int maxcount = 1, count = 0;
 		int grantedQoSs[1];
 		if (MQTTDeserialize_suback(&packetid, maxcount, &count, grantedQoSs, buf, buflen) == 1)
@@ -167,7 +167,7 @@ char* MQTTFormat_toClientString(char* strbuf, int strbuflen, unsigned char* buf,
 	break;
 	case UNSUBACK:
 	{
-		unsigned short packetid;
+		uint64_t packetid;
 		if (MQTTDeserialize_unsuback(&packetid, buf, buflen) == 1)
 			strindex = MQTTStringFormat_ack(strbuf, strbuflen, UNSUBACK, 0, packetid);
 	}
@@ -205,7 +205,7 @@ char* MQTTFormat_toServerString(char* strbuf, int strbuflen, unsigned char* buf,
 	case PUBLISH:
 	{
 		unsigned char dup, retained, *payload;
-		unsigned short packetid;
+		uint64_t packetid;
 		int qos, payloadlen;
 		MQTTString topicName = MQTTString_initializer;
 		if (MQTTDeserialize_publish(&dup, &qos, &retained, &packetid, &topicName,
@@ -220,7 +220,7 @@ char* MQTTFormat_toServerString(char* strbuf, int strbuflen, unsigned char* buf,
 	case PUBCOMP:
 	{
 		unsigned char packettype, dup;
-		unsigned short packetid;
+		uint64_t packetid;
 		if (MQTTDeserialize_ack(&packettype, &dup, &packetid, buf, buflen) == 1)
 			strindex = MQTTStringFormat_ack(strbuf, strbuflen, packettype, dup, packetid);
 	}
@@ -228,7 +228,7 @@ char* MQTTFormat_toServerString(char* strbuf, int strbuflen, unsigned char* buf,
 	case SUBSCRIBE:
 	{
 		unsigned char dup;
-		unsigned short packetid;
+		uint64_t packetid;
 		int maxcount = 1, count = 0;
 		MQTTString topicFilters[1];
 		int requestedQoSs[1];
@@ -240,7 +240,7 @@ char* MQTTFormat_toServerString(char* strbuf, int strbuflen, unsigned char* buf,
 	case UNSUBSCRIBE:
 	{
 		unsigned char dup;
-		unsigned short packetid;
+		uint64_t packetid;
 		int maxcount = 1, count = 0;
 		MQTTString topicFilters[1];
 		if (MQTTDeserialize_unsubscribe(&dup, &packetid, maxcount, &count, topicFilters, buf, buflen) == 1)

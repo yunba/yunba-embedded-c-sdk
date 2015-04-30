@@ -33,6 +33,9 @@ extern "C" {
   #define DLLExport  
 #endif
 
+typedef unsigned int            uint32_t;
+typedef unsigned long long int  uint64_t;
+
 enum errors
 {
 	MQTTPACKET_BUFFER_TOO_SHORT = -2,
@@ -94,8 +97,8 @@ int MQTTstrlen(MQTTString mqttstring);
 #include "MQTTUnsubscribe.h"
 #include "MQTTFormat.h"
 
-int MQTTSerialize_ack(unsigned char* buf, int buflen, unsigned char type, unsigned char dup, unsigned short packetid);
-int MQTTDeserialize_ack(unsigned char* packettype, unsigned char* dup, unsigned short* packetid, unsigned char* buf, int buflen);
+int MQTTSerialize_ack(unsigned char* buf, int buflen, unsigned char type, unsigned char dup, uint64_t packetid);
+int MQTTDeserialize_ack(unsigned char* packettype, unsigned char* dup, uint64_t* packetid, unsigned char* buf, int buflen);
 
 int MQTTPacket_len(int rem_len);
 int MQTTPacket_equals(MQTTString* a, char* b);
@@ -107,6 +110,7 @@ int MQTTPacket_decodeBuf(unsigned char* buf, int* value);
 int readInt(unsigned char** pptr);
 char readChar(unsigned char** pptr);
 void writeChar(unsigned char** pptr, char c);
+void writeInt64(char** pptr, uint64_t anInt);
 void writeInt(unsigned char** pptr, int anInt);
 int readMQTTLenString(MQTTString* mqttstring, unsigned char** pptr, unsigned char* enddata);
 void writeCString(unsigned char** pptr, const char* string);
