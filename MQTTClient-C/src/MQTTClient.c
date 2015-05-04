@@ -22,7 +22,7 @@ void NewMessageData(MessageData* md, MQTTString* aTopicName, MQTTMessage* aMessg
 }
 
 
-int64_t getNextPacketId(Client *c) {
+uint64_t getNextPacketId(Client *c) {
     return c->next_packetid = (c->next_packetid == MAX_PACKET_ID) ? 1 : c->next_packetid + 1;
 }
 
@@ -159,18 +159,18 @@ int deliverMessage(Client* c, MQTTString* topicName, MQTTMessage* message)
 {
     int i;
     int rc = FAILURE;
-    printf("----->%s\n", __func__);
 
     // we have to find the right message handler - indexed by topic
     for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i)
     {
+//    	printf("%s, %s, %s\n", __func__, topicName->cstring, c->messageHandlers[i].topicFilter);
         if (c->messageHandlers[i].topicFilter != 0 && (MQTTPacket_equals(topicName, (char*)c->messageHandlers[i].topicFilter) ||
                 isTopicMatched((char*)c->messageHandlers[i].topicFilter, topicName)))
         {
             if (c->messageHandlers[i].fp != NULL)
             {
                 MessageData md;
-    		printf("----->%s, %i\n", __func__, i);
+//                printf("----->%s, %s, %s\n", __func__, topicName, message);
                 NewMessageData(&md, topicName, message);
                 c->messageHandlers[i].fp(&md);
                 rc = SUCCESS;
@@ -437,7 +437,7 @@ int MQTTUnsubscribe(Client* c, const char* topicFilter)
     
     if (waitfor(c, UNSUBACK, &timer) == UNSUBACK)
     {
-        unsigned short mypacketid;  // should be the same as the packetid above
+        uint64_t mypacketid;  // should be the same as the packetid above
         if (MQTTDeserialize_unsuback(&mypacketid, c->readbuf, c->readbuf_size) == 1)
             rc = 0; 
     }

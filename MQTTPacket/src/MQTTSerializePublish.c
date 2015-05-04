@@ -119,8 +119,8 @@ int MQTTSerialize_ack(unsigned char* buf, int buflen, unsigned char packettype, 
 	header.bits.qos = (packettype == PUBREL) ? 1 : 0;
 	writeChar(&ptr, header.byte); /* write header */
 
-	ptr += MQTTPacket_encode(ptr, 2); /* write remaining length */
-	writeInt(&ptr, packetid);
+	ptr += MQTTPacket_encode(ptr, 8); /* write remaining length */
+	writeInt64(&ptr, packetid);
 	rc = ptr - buf;
 exit:
 	FUNC_EXIT_RC(rc);

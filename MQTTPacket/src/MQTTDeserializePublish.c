@@ -58,7 +58,7 @@ int MQTTDeserialize_publish(unsigned char* dup, int* qos, unsigned char* retaine
 		goto exit;
 
 	if (*qos > 0)
-		*packetid = readInt(&curdata);
+		*packetid = readInt64(&curdata);
 
 	*payloadlen = enddata - curdata;
 	*payload = curdata;
@@ -97,7 +97,7 @@ int MQTTDeserialize_ack(unsigned char* packettype, unsigned char* dup, uint64_t*
 
 	if (enddata - curdata < 2)
 		goto exit;
-	*packetid = readInt(&curdata);
+	*packetid = readInt64(&curdata);
 
 	rc = 1;
 exit:

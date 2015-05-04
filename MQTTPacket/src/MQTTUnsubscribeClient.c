@@ -28,7 +28,7 @@
 int MQTTSerialize_unsubscribeLength(int count, MQTTString topicFilters[])
 {
 	int i;
-	int len = 2; /* packetid */
+	int len = 8; /* packetid */
 
 	for (i = 0; i < count; ++i)
 		len += 2 + MQTTstrlen(topicFilters[i]); /* length + topic*/
@@ -70,7 +70,7 @@ int MQTTSerialize_unsubscribe(unsigned char* buf, int buflen, unsigned char dup,
 
 	ptr += MQTTPacket_encode(ptr, rem_len); /* write remaining length */;
 
-	writeInt(&ptr, packetid);
+	writeInt64(&ptr, packetid);
 
 	for (i = 0; i < count; ++i)
 		writeMQTTString(&ptr, topicFilters[i]);

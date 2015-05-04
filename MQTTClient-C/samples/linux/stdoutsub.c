@@ -180,15 +180,15 @@ void getopts(int argc, char** argv)
 
 static void messageArrived(MessageData* md)
 {
-	printf("=====>%s", __func__);
+	printf("=====>%s\n", __func__);
 	MQTTMessage* message = md->message;
 
-	if (opts.showtopics)
-		printf("%.*s\t", md->topicName->lenstring.len, md->topicName->lenstring.data);
-	if (opts.nodelimiter)
-		printf("%.*s", (int)message->payloadlen, (char*)message->payload);
-	else
-		printf("%.*s%s", (int)message->payloadlen, (char*)message->payload, opts.delimiter);
+//	if (opts.showtopics)
+		printf("%.*s\\n", md->topicName->lenstring.len, md->topicName->lenstring.data);
+//	if (opts.nodelimiter)
+		printf("%.*s\n", (int)message->payloadlen, (char*)message->payload);
+//	else
+//		printf("%.*s%s", (int)message->payloadlen, (char*)message->payload, opts.delimiter);
 	//fflush(stdout);
 }
 
@@ -236,6 +236,8 @@ int main(int argc, char** argv)
 	printf("Connected %d\n", rc);
     
     printf("Subscribing to %s, %d\n", topic, messageArrived);
+
+//    rc = MQTTUnsubscribe(&c, "hello");
 
 	rc = MQTTSubscribe(&c, topic, opts.qos, messageArrived);
 	printf("Subscribed %d\n", rc);
