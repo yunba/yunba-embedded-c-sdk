@@ -130,6 +130,17 @@ int readInt(unsigned char** pptr)
 	return len;
 }
 
+uint64_t readInt64(char** pptr)
+{
+	uint8_t *ptr = (uint8_t *)*pptr;
+    uint64_t len = ((uint64_t)ptr[0])<<0x38 | ((uint64_t)ptr[1])<<0x30
+        | ((uint64_t)ptr[2])<<0x28 | ((uint64_t)ptr[3])<<0x20
+        | ((uint64_t)ptr[4])<<0x18 | ((uint64_t)ptr[5])<<0x10
+        | ((uint64_t)ptr[6])<<0x8 | ((uint64_t)ptr[7])<<0;
+    *pptr += 8;
+    return len;
+}
+
 
 /**
  * Reads one character from the input buffer.

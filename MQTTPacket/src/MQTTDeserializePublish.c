@@ -79,7 +79,7 @@ exit:
   * @param buflen the length in bytes of the data in the supplied buffer
   * @return error code.  1 is success, 0 is failure
   */
-int MQTTDeserialize_ack(unsigned char* packettype, unsigned char* dup, unsigned short* packetid, unsigned char* buf, int buflen)
+int MQTTDeserialize_ack(unsigned char* packettype, unsigned char* dup, uint64_t* packetid, unsigned char* buf, int buflen)
 {
 	MQTTHeader header = {0};
 	unsigned char* curdata = buf;

@@ -40,7 +40,7 @@ struct MQTTMessage
     enum QoS qos;
     char retained;
     char dup;
-    unsigned short id;
+    uint64_t id;
     void *payload;
     size_t payloadlen;
 };
@@ -67,7 +67,7 @@ void setDefaultMessageHandler(Client*, messageHandler);
 void MQTTClient(Client*, Network*, unsigned int, unsigned char*, size_t, unsigned char*, size_t);
 
 struct Client {
-    unsigned int next_packetid;
+    uint64_t next_packetid;
     unsigned int command_timeout_ms;
     size_t buf_size, readbuf_size;
     unsigned char *buf;  

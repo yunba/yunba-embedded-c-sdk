@@ -33,8 +33,9 @@ extern "C" {
   #define DLLExport  
 #endif
 
-typedef unsigned int            uint32_t;
-typedef unsigned long long int  uint64_t;
+//typedef unsigned int            uint32_t;
+//typedef unsigned long long int  uint64_t;
+#include <stdint.h>
 
 enum errors
 {
@@ -108,6 +109,7 @@ int MQTTPacket_decode(int (*getcharfn)(unsigned char*, int), int* value);
 int MQTTPacket_decodeBuf(unsigned char* buf, int* value);
 
 int readInt(unsigned char** pptr);
+uint64_t readInt64(char** pptr);
 char readChar(unsigned char** pptr);
 void writeChar(unsigned char** pptr, char c);
 void writeInt64(char** pptr, uint64_t anInt);

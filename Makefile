@@ -45,7 +45,8 @@ SOURCE_FILES_C = $(srcdir)/*.c
 HEADERS = $(srcdir)/*.h
 
 
-SAMPLE_FILES_C = pub0sub1 qos0pub
+#SAMPLE_FILES_C = pub0sub1 qos0pub
+SAMPLE_FILES_C = 
 SYNC_SAMPLES = ${addprefix ${blddir}/samples/,${SAMPLE_FILES_C}}
 
 

@@ -22,7 +22,7 @@ void NewMessageData(MessageData* md, MQTTString* aTopicName, MQTTMessage* aMessg
 }
 
 
-int getNextPacketId(Client *c) {
+int64_t getNextPacketId(Client *c) {
     return c->next_packetid = (c->next_packetid == MAX_PACKET_ID) ? 1 : c->next_packetid + 1;
 }
 
@@ -159,6 +159,7 @@ int deliverMessage(Client* c, MQTTString* topicName, MQTTMessage* message)
 {
     int i;
     int rc = FAILURE;
+    printf("----->%s\n", __func__);
 
     // we have to find the right message handler - indexed by topic
     for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i)
@@ -169,6 +170,7 @@ int deliverMessage(Client* c, MQTTString* topicName, MQTTMessage* message)
             if (c->messageHandlers[i].fp != NULL)
             {
                 MessageData md;
+    		printf("----->%s, %i\n", __func__, i);
                 NewMessageData(&md, topicName, message);
                 c->messageHandlers[i].fp(&md);
                 rc = SUCCESS;
@@ -220,6 +222,8 @@ int cycle(Client* c, Timer* timer)
 {
     // read the socket, see what work is due
     unsigned short packet_type = readPacket(c, timer);
+
+    printf("%s, %i\n", __func__, packet_type);
     
     int len = 0,
         rc = SUCCESS;
@@ -383,9 +387,11 @@ int MQTTSubscribe(Client* c, const char* topicFilter, enum QoS qos, messageHandl
     if (waitfor(c, SUBACK, &timer) == SUBACK)      // wait for suback 
     {
         int count = 0, grantedQoS = -1;
-        unsigned short mypacketid;
+        uint64_t mypacketid;
         if (MQTTDeserialize_suback(&mypacketid, 1, &count, &grantedQoS, c->readbuf, c->readbuf_size) == 1)
             rc = grantedQoS; // 0, 1, 2 or 0x80 
+
+
         if (rc != 0x80)
         {
             int i;
@@ -393,6 +399,7 @@ int MQTTSubscribe(Client* c, const char* topicFilter, enum QoS qos, messageHandl
             {
                 if (c->messageHandlers[i].topicFilter == 0)
                 {
+                	printf("======>%s, %d\n", __func__, messageHandler);
                     c->messageHandlers[i].topicFilter = topicFilter;
                     c->messageHandlers[i].fp = messageHandler;
                     rc = 0;
@@ -470,7 +477,7 @@ int MQTTPublish(Client* c, const char* topicName, MQTTMessage* message)
     {
         if (waitfor(c, PUBACK, &timer) == PUBACK)
         {
-            unsigned short mypacketid;
+            uint64_t mypacketid;
             unsigned char dup, type;
             if (MQTTDeserialize_ack(&type, &dup, &mypacketid, c->readbuf, c->readbuf_size) != 1)
                 rc = FAILURE;
@@ -482,7 +489,7 @@ int MQTTPublish(Client* c, const char* topicName, MQTTMessage* message)
     {
         if (waitfor(c, PUBCOMP, &timer) == PUBCOMP)
         {
-            unsigned short mypacketid;
+        	uint64_t mypacketid;
             unsigned char dup, type;
             if (MQTTDeserialize_ack(&type, &dup, &mypacketid, c->readbuf, c->readbuf_size) != 1)
                 rc = FAILURE;

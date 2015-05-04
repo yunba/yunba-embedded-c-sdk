@@ -30,7 +30,7 @@ int MQTTSerialize_connectLength(MQTTPacket_connectData* options)
 
 	FUNC_ENTRY;
 
-	if (options->MQTTVersion == 3)
+	if (options->MQTTVersion == 3 || options->MQTTVersion == 0x13)
 		len = 12; /* variable depending on MQTT or MQIsdp */
 	else if (options->MQTTVersion == 4)
 		len = 10;
@@ -81,9 +81,9 @@ int MQTTSerialize_connect(unsigned char* buf, int buflen, MQTTPacket_connectData
 		writeCString(&ptr, "MQTT");
 		writeChar(&ptr, (char) 4);
 	}
-	else if (options->MQTTVersion == 0x19) {
+	else if (options->MQTTVersion == 0x13) {
 		writeCString(&ptr, "MQIsdp");
-		writeChar(&ptr, (char) 0x19);
+		writeChar(&ptr, (char) 0x13);
 	}
 	else
 	{

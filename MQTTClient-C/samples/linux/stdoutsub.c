@@ -51,6 +51,7 @@
 
 
 volatile int toStop = 0;
+static void messageArrived(MessageData* md);
 
 
 void usage()
@@ -177,8 +178,9 @@ void getopts(int argc, char** argv)
 }
 
 
-void messageArrived(MessageData* md)
+static void messageArrived(MessageData* md)
 {
+	printf("=====>%s", __func__);
 	MQTTMessage* message = md->message;
 
 	if (opts.showtopics)
@@ -221,7 +223,7 @@ int main(int argc, char** argv)
  
 	MQTTPacket_connectData data = MQTTPacket_connectData_initializer;       
 	data.willFlag = 0;
-	data.MQTTVersion = 3;
+	data.MQTTVersion = 19;
 	data.clientID.cstring = opts.clientid;
 	data.username.cstring = opts.username;
 	data.password.cstring = opts.password;
@@ -233,13 +235,26 @@ int main(int argc, char** argv)
 	rc = MQTTConnect(&c, &data);
 	printf("Connected %d\n", rc);
     
-    printf("Subscribing to %s\n", topic);
+    printf("Subscribing to %s, %d\n", topic, messageArrived);
+
 	rc = MQTTSubscribe(&c, topic, opts.qos, messageArrived);
 	printf("Subscribed %d\n", rc);
 
+//	sleep(3);
+	printf("publish---->\n");
+	MQTTMessage M;
+	M.qos = 1;
+	char temp[100];
+	strcpy(temp, "Helow World\n");
+	M.payload = temp;
+	M.id = 1000;
+	M.payloadlen = strlen(temp);
+	rc = MQTTPublish(&c, topic, &M);
+	printf("published %d\n", rc);
+
 	while (!toStop)
 	{
-		MQTTYield(&c, 1000);	
+		MQTTYield(&c, 1000);
 	}
 	
 	printf("Stopping\n");
