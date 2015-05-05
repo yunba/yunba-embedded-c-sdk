@@ -197,11 +197,11 @@ int deliverextMessage(Client* c, EXTED_CMD cmd, int status, int ret_string_len, 
 	    // we have to find the right message handler - indexed by topic
 	    for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i)
 	    {
-	    	if (c->extmessageHandlers[i].cb != NULL, c->extmessageHandlers[i].cmd > 0)
+		if (c->extmessageHandlers[i].cb != NULL && c->extmessageHandlers[i].cmd > 0)
 	    	{
-	    		c->extmessageHandlers[i].cb(cmd, status, ret_string_len, ret_string);
-	    		 rc = SUCCESS;
-	    		 break;
+			c->extmessageHandlers[i].cb(cmd, status, ret_string_len, ret_string);
+			rc = SUCCESS;
+			break;
 	    	}
 	    }
 
@@ -660,7 +660,7 @@ int MQTTSetExtCmdCallBack(Client *c, extendedmessageHandler cb)
 	int i, rc = FAILURE;
     for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i)
     {
-        if (c->extmessageHandlers[i].cmd == NULL)
+//        if (c->extmessageHandlers[i].cmd == NULL)
         {
             c->extmessageHandlers[i].cmd = 1;
             c->extmessageHandlers[i].cb = cb;
