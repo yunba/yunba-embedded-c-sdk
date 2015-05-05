@@ -223,7 +223,8 @@ int cycle(Client* c, Timer* timer)
     // read the socket, see what work is due
     unsigned short packet_type = readPacket(c, timer);
 
-    printf("%s, %i\n", __func__, packet_type);
+    if (packet_type != 65535)
+    	printf("%s, %i\n", __func__, packet_type);
     
     int len = 0,
         rc = SUCCESS;

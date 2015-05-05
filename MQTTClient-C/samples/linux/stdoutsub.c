@@ -180,13 +180,13 @@ void getopts(int argc, char** argv)
 
 static void messageArrived(MessageData* md)
 {
-	printf("=====>%s\n", __func__);
+	printf("=====>%s\t", __func__);
 	MQTTMessage* message = md->message;
 
 //	if (opts.showtopics)
-		printf("%.*s\\n", md->topicName->lenstring.len, md->topicName->lenstring.data);
+		printf("topic: %.*s\t", md->topicName->lenstring.len, md->topicName->lenstring.data);
 //	if (opts.nodelimiter)
-		printf("%.*s\n", (int)message->payloadlen, (char*)message->payload);
+		printf("Message: %.*s\n", (int)message->payloadlen, (char*)message->payload);
 //	else
 //		printf("%.*s%s", (int)message->payloadlen, (char*)message->payload, opts.delimiter);
 	//fflush(stdout);
