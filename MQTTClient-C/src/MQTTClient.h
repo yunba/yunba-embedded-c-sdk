@@ -26,6 +26,7 @@
 
 enum QoS { QOS0, QOS1, QOS2 };
 
+
 // all failure return codes must be negative
 enum returnCode { BUFFER_OVERFLOW = -2, FAILURE = -1, SUCCESS = 0 };
 
@@ -52,6 +53,7 @@ struct MessageData
 };
 
 typedef void (*messageHandler)(MessageData*);
+typedef void (*extendedmessageHandler)(EXTED_CMD cmd, int status, int ret_string_len, char *ret_string);
 
 typedef struct Client Client;
 
@@ -65,6 +67,11 @@ int MQTTYield (Client*, int);
 int MQTTSetAlias(Client*, const char*);
 int MQTTPublishToAlias(Client* c, const char* alias, void *payload, int payloadlen);
 int MQTTReport(Client* c, const char* action, const char *data);
+int MQTTGetAlias(Client* c, const char *param);
+int MQTTGetTopic(Client* c, const char *parameter);
+int MQTTGetStatus(Client* c, const char *parameter);
+int MQTTGetAliasList(Client* c, const char *parameter);
+int MQTTSetExtCmdCallBack(Client *c, extendedmessageHandler);
 
 void setDefaultMessageHandler(Client*, messageHandler);
 
@@ -86,6 +93,12 @@ struct Client {
         void (*fp) (MessageData*);
     } messageHandlers[MAX_MESSAGE_HANDLERS];      // Message handlers are indexed by subscription topic
     
+    struct ExtMessageHandlers
+    {
+    	EXTED_CMD cmd;
+        void (*cb) (EXTED_CMD cmd, int status, int ret_string_len, char *ret_string);
+    } extmessageHandlers[MAX_MESSAGE_HANDLERS];      // Message handlers are indexed by subscription topic
+
     void (*defaultMessageHandler) (MessageData*);
     
     Network* ipstack;

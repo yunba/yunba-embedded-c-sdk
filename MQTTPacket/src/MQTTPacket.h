@@ -48,8 +48,19 @@ enum msgTypes
 {
 	CONNECT = 1, CONNACK, PUBLISH, PUBACK, PUBREC, PUBREL,
 	PUBCOMP, SUBSCRIBE, SUBACK, UNSUBSCRIBE, UNSUBACK,
-	PINGREQ, PINGRESP, DISCONNECT
+	PINGREQ, PINGRESP, DISCONNECT, PUBLISH2
 };
+
+typedef enum {
+	GET_ALIAS =1,
+	GET_ALIAS_ACK,
+	GET_TOPIC,
+	GET_TOPIC_ACK,
+	GET_ALIAS_LIST,
+	GET_ALIAS_LIST_ACK,
+	GET_STATUS = 9,
+	GET_STATUS_ACK
+} EXTED_CMD;
 
 /**
  * Bitfields for the MQTT header byte.
@@ -94,6 +105,7 @@ int MQTTstrlen(MQTTString mqttstring);
 
 #include "MQTTConnect.h"
 #include "MQTTPublish.h"
+#include "MQTTPublish2.h"
 #include "MQTTSubscribe.h"
 #include "MQTTUnsubscribe.h"
 #include "MQTTFormat.h"

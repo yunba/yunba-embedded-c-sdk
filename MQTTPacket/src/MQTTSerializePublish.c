@@ -66,7 +66,7 @@ int MQTTSerialize_publish(unsigned char* buf, int buflen, unsigned char dup, int
 		rc = MQTTPACKET_BUFFER_TOO_SHORT;
 		goto exit;
 	}
-	printf("%s, %i\n", __func__, rem_len);
+//	printf("%s, %i\n", __func__, rem_len);
 
 	header.bits.type = PUBLISH;
 	header.bits.dup = dup;

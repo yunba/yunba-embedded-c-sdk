@@ -180,16 +180,21 @@ void getopts(int argc, char** argv)
 
 static void messageArrived(MessageData* md)
 {
-	printf("=====>%s\t", __func__);
+	printf("%s, ", __func__);
 	MQTTMessage* message = md->message;
 
 //	if (opts.showtopics)
-		printf("topic: %.*s\t", md->topicName->lenstring.len, md->topicName->lenstring.data);
+		printf("topic: %.*s, ", md->topicName->lenstring.len, md->topicName->lenstring.data);
 //	if (opts.nodelimiter)
 		printf("Message: %.*s\n", (int)message->payloadlen, (char*)message->payload);
 //	else
 //		printf("%.*s%s", (int)message->payloadlen, (char*)message->payload, opts.delimiter);
 	//fflush(stdout);
+}
+
+static void extMessageArrive(EXTED_CMD cmd, int status, int ret_string_len, char *ret_string)
+{
+	printf("%s, cmd:%d, status:%d, payload: %.*s\n", __func__, cmd, status, ret_string_len, ret_string);
 }
 
 
@@ -235,15 +240,13 @@ int main(int argc, char** argv)
 	rc = MQTTConnect(&c, &data);
 	printf("Connected %d\n", rc);
     
-    printf("Subscribing to %s, %d\n", topic, messageArrived);
+	MQTTSetExtCmdCallBack(&c, extMessageArrive);
 
 //    rc = MQTTUnsubscribe(&c, "hello");
 
 	rc = MQTTSubscribe(&c, topic, opts.qos, messageArrived);
 	printf("Subscribed %d\n", rc);
 
-//	sleep(3);
-	printf("publish---->\n");
 	MQTTMessage M;
 	M.qos = 1;
 	char temp[100];
@@ -254,13 +257,20 @@ int main(int argc, char** argv)
 	rc = MQTTPublish(&c, topic, &M);
 	printf("published %d\n", rc);
 
-	printf("set alias--->\n");
 	rc = MQTTSetAlias(&c, "Jerry");
-	printf("alias set %d\n", rc);
+	printf("set alias %d\n", rc);
 
-	printf("publish to alias--->\n");
-	rc = MQTTPublishToAlias(&c, "Jerry", "Tom", strlen("Tom"));
-	printf("alias published %d\n", rc);
+	rc = MQTTPublishToAlias(&c, "baidu", "Hello", strlen("Hello"));
+	printf("publish to alias %d\n", rc);
+
+	rc = MQTTGetAlias(&c, "unknow");
+	printf("get alias %d\n", rc);
+
+	rc = MQTTGetStatus(&c, "Jerry");
+	printf("get status %d\n", rc);
+
+	rc = MQTTGetAliasList(&c, topic);
+	printf("alias list get %d\n", rc);
 
 	while (!toStop)
 	{

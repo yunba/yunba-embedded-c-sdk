@@ -189,6 +189,25 @@ int deliverMessage(Client* c, MQTTString* topicName, MQTTMessage* message)
     return rc;
 }
 
+int deliverextMessage(Client* c, EXTED_CMD cmd, int status, int ret_string_len, char *ret_string)
+{
+		int i;
+		int rc = FAILURE;
+
+	    // we have to find the right message handler - indexed by topic
+	    for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i)
+	    {
+	    	if (c->extmessageHandlers[i].cb != NULL, c->extmessageHandlers[i].cmd > 0)
+	    	{
+	    		c->extmessageHandlers[i].cb(cmd, status, ret_string_len, ret_string);
+	    		 rc = SUCCESS;
+	    		 break;
+	    	}
+	    }
+
+	    return rc;
+}
+
 
 int keepalive(Client* c)
 {
@@ -223,8 +242,8 @@ int cycle(Client* c, Timer* timer)
     // read the socket, see what work is due
     unsigned short packet_type = readPacket(c, timer);
 
-    if (packet_type != 65535)
-    	printf("%s, %i\n", __func__, packet_type);
+//    if (packet_type != 65535)
+//    	printf("%s, %i\n", __func__, packet_type);
     
     int len = 0,
         rc = SUCCESS;
@@ -235,6 +254,19 @@ int cycle(Client* c, Timer* timer)
         case PUBACK:
         case SUBACK:
             break;
+        case PUBLISH2:
+        {
+            MQTTString topicName;
+            MQTTMessage msg;
+            EXTED_CMD cmd;
+            int status;
+            if (MQTTDeserialize_publish2((unsigned char*)&msg.dup, (int*)&msg.qos, (unsigned char*)&msg.retained, (unsigned short*)&msg.id, &cmd,
+               &status, (unsigned char**)&msg.payload, (int*)&msg.payloadlen, c->readbuf, c->readbuf_size) != 1)
+                goto exit;
+            deliverextMessage(c, cmd, status, msg.payloadlen, msg.payload);
+        	break;
+        }
+
         case PUBLISH:
         {
             MQTTString topicName;
@@ -400,7 +432,7 @@ int MQTTSubscribe(Client* c, const char* topicFilter, enum QoS qos, messageHandl
             {
                 if (c->messageHandlers[i].topicFilter == 0)
                 {
-                	printf("======>%s, %d\n", __func__, messageHandler);
+//                	printf("======>%s, %d\n", __func__, messageHandler);
                     c->messageHandlers[i].topicFilter = topicFilter;
                     c->messageHandlers[i].fp = messageHandler;
                     rc = 0;
@@ -560,7 +592,105 @@ int MQTTReport(Client* c, const char* action, const char *data)
 	sprintf(topic, "$$report/%s", action);
 	M.payload = data;
 	M.id = getNextPacketId(c);
-	M.payloadlen = srlen(data);
+	M.payloadlen = strlen(data);
 	rc = MQTTPublish(c, topic, &M);
+	return rc;
+}
+
+#define DEFAULT_QOS 1
+#define DEFAULT_RETAINED 0
+int MQTTPublish2(Client* c, EXTED_CMD cmd, void *payload, int payload_len, int qos, unsigned char retained)
+{
+    int rc = FAILURE;
+    Timer timer;
+    int len = 0;
+    uint64_t id = 0;
+
+    InitTimer(&timer);
+    countdown_ms(&timer, c->command_timeout_ms);
+
+    if (!c->isconnected)
+        goto exit;
+
+    if (qos == QOS1 || qos == QOS2)
+        id = getNextPacketId(c);
+
+    len = MQTTSerialize_publish2(c->buf, c->buf_size, 0, qos, retained, id,
+    		cmd, payload, payload_len);
+    if (len <= 0)
+        goto exit;
+    if ((rc = sendPacket(c, len, &timer)) != SUCCESS) // send the subscribe packet
+        goto exit; // there was a problem
+
+    if (waitfor(c, PUBLISH2, &timer) == PUBLISH2) {
+    	rc = SUCCESS;
+    }
+
+//    if (qos == QOS1)
+//    {
+//        if (waitfor(c, PUBLISH2, &timer) == PUBLISH2)
+//        {
+//            uint64_t mypacketid;
+//            unsigned char dup, type;
+//            if (MQTTDeserialize_ack(&type, &dup, &mypacketid, c->readbuf, c->readbuf_size) != 1)
+//                rc = FAILURE;
+//        }
+//        else
+//            rc = FAILURE;
+//    }
+//    else if (qos == QOS2)
+//    {
+//        if (waitfor(c, PUBCOMP, &timer) == PUBCOMP)
+//        {
+//        	uint64_t mypacketid;
+//            unsigned char dup, type;
+//            if (MQTTDeserialize_ack(&type, &dup, &mypacketid, c->readbuf, c->readbuf_size) != 1)
+//                rc = FAILURE;
+//        }
+//        else
+//            rc = FAILURE;
+//    }
+
+exit:
+    return rc;
+}
+
+int MQTTSetExtCmdCallBack(Client *c, extendedmessageHandler cb)
+{
+	int i, rc = FAILURE;
+    for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i)
+    {
+        if (c->extmessageHandlers[i].cmd == NULL)
+        {
+            c->extmessageHandlers[i].cmd = 1;
+            c->extmessageHandlers[i].cb = cb;
+            rc = 0;
+            break;
+        }
+    }
+    return rc;
+}
+
+int MQTTGetAlias(Client* c, const char *param)
+{
+	int rc = MQTTPublish2(c, GET_ALIAS, param, strlen(param), DEFAULT_QOS, DEFAULT_RETAINED);
+	return rc;
+}
+
+int MQTTGetTopic(Client* c, const char *parameter)
+{
+	int rc = MQTTPublish2(c, GET_TOPIC, parameter, strlen(parameter), DEFAULT_QOS, DEFAULT_RETAINED);
+	return rc;
+}
+
+int MQTTGetStatus(Client* c, const char *parameter)
+{
+	int rc = MQTTPublish2(c, GET_STATUS, parameter, strlen(parameter), DEFAULT_QOS, DEFAULT_RETAINED);
+	return rc;
+}
+
+int MQTTGetAliasList(Client* c, const char *parameter)
+{
+	int rc = MQTTPublish2(c, GET_ALIAS_LIST, parameter, strlen(parameter), DEFAULT_QOS, DEFAULT_RETAINED);
 	return rc;
 }
