@@ -254,6 +254,14 @@ int main(int argc, char** argv)
 	rc = MQTTPublish(&c, topic, &M);
 	printf("published %d\n", rc);
 
+	printf("set alias--->\n");
+	rc = MQTTSetAlias(&c, "Jerry");
+	printf("alias set %d\n", rc);
+
+	printf("publish to alias--->\n");
+	rc = MQTTPublishToAlias(&c, "Jerry", "Tom", strlen("Tom"));
+	printf("alias published %d\n", rc);
+
 	while (!toStop)
 	{
 		MQTTYield(&c, 1000);

@@ -62,6 +62,10 @@ int MQTTUnsubscribe (Client*, const char*);
 int MQTTDisconnect (Client*);
 int MQTTYield (Client*, int);
 
+int MQTTSetAlias(Client*, const char*);
+int MQTTPublishToAlias(Client* c, const char* alias, void *payload, int payloadlen);
+int MQTTReport(Client* c, const char* action, const char *data);
+
 void setDefaultMessageHandler(Client*, messageHandler);
 
 void MQTTClient(Client*, Network*, unsigned int, unsigned char*, size_t, unsigned char*, size_t);

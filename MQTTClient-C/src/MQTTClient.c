@@ -520,3 +520,47 @@ int MQTTDisconnect(Client* c)
     return rc;
 }
 
+int MQTTSetAlias(Client* c, const char* alias)
+{
+	int rc = 0;
+	MQTTMessage M;
+	M.qos = 1;
+	/*TODO: buffer size ?? */
+	char temp[100];
+	strcpy(temp, alias);
+	M.payload = temp;
+	M.id = getNextPacketId(c);
+	M.payloadlen = strlen(temp);
+	rc = MQTTPublish(c, ",yali", &M);
+	return rc;
+}
+
+int MQTTPublishToAlias(Client* c, const char* alias, void *payload, int payloadlen)
+{
+	int rc = 0;
+	MQTTMessage M;
+	M.qos = 1;
+	/*TODO: buffer size ?? */
+	char topic[100];
+	sprintf(topic, ",yta/%s", alias);
+	M.payload = payload;
+	M.id = getNextPacketId(c);
+	M.payloadlen = payloadlen;
+	rc = MQTTPublish(c, topic, &M);
+	return rc;
+}
+
+int MQTTReport(Client* c, const char* action, const char *data)
+{
+	int rc = 0;
+	MQTTMessage M;
+	M.qos = 1;
+	/*TODO: buffer size ?? */
+	char topic[100];
+	sprintf(topic, "$$report/%s", action);
+	M.payload = data;
+	M.id = getNextPacketId(c);
+	M.payloadlen = srlen(data);
+	rc = MQTTPublish(c, topic, &M);
+	return rc;
+}
