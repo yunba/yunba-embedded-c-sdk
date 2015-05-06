@@ -272,6 +272,9 @@ int main(int argc, char** argv)
 	rc = MQTTGetAliasList(&c, topic);
 	printf("alias list get %d\n", rc);
 
+	rc = MQTTGetTopic(&c, "Jerry");
+	printf("get topic %d\n", rc);
+
 	while (!toStop)
 	{
 		MQTTYield(&c, 1000);

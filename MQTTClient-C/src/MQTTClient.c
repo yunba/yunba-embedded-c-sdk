@@ -170,7 +170,6 @@ int deliverMessage(Client* c, MQTTString* topicName, MQTTMessage* message)
             if (c->messageHandlers[i].fp != NULL)
             {
                 MessageData md;
-//                printf("----->%s, %s, %s\n", __func__, topicName, message);
                 NewMessageData(&md, topicName, message);
                 c->messageHandlers[i].fp(&md);
                 rc = SUCCESS;
@@ -432,7 +431,6 @@ int MQTTSubscribe(Client* c, const char* topicFilter, enum QoS qos, messageHandl
             {
                 if (c->messageHandlers[i].topicFilter == 0)
                 {
-//                	printf("======>%s, %d\n", __func__, messageHandler);
                     c->messageHandlers[i].topicFilter = topicFilter;
                     c->messageHandlers[i].fp = messageHandler;
                     rc = 0;
@@ -625,31 +623,6 @@ int MQTTPublish2(Client* c, EXTED_CMD cmd, void *payload, int payload_len, int q
     if (waitfor(c, PUBLISH2, &timer) == PUBLISH2) {
     	rc = SUCCESS;
     }
-
-//    if (qos == QOS1)
-//    {
-//        if (waitfor(c, PUBLISH2, &timer) == PUBLISH2)
-//        {
-//            uint64_t mypacketid;
-//            unsigned char dup, type;
-//            if (MQTTDeserialize_ack(&type, &dup, &mypacketid, c->readbuf, c->readbuf_size) != 1)
-//                rc = FAILURE;
-//        }
-//        else
-//            rc = FAILURE;
-//    }
-//    else if (qos == QOS2)
-//    {
-//        if (waitfor(c, PUBCOMP, &timer) == PUBCOMP)
-//        {
-//        	uint64_t mypacketid;
-//            unsigned char dup, type;
-//            if (MQTTDeserialize_ack(&type, &dup, &mypacketid, c->readbuf, c->readbuf_size) != 1)
-//                rc = FAILURE;
-//        }
-//        else
-//            rc = FAILURE;
-//    }
 
 exit:
     return rc;
