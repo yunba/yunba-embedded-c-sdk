@@ -35,3 +35,13 @@ Discussion of the Paho clients takes place on the [Eclipse paho-dev mailing list
 General questions about the MQTT protocol are discussed in the [MQTT Google Group](https://groups.google.com/forum/?hl=en-US&fromgroups#!forum/mqtt).
 
 There is much more information available via the [MQTT community site](http://mqtt.org).
+
+##怎样使用
+
+###*nix平台
+
+cd MQTTClient-C/samples/linux
+
+./build.sh
+
+./stdoutsub topic --appkey <appkey>
