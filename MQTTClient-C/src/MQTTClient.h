@@ -52,6 +52,22 @@ struct MessageData
     MQTTString* topicName;
 };
 
+typedef struct {
+        /* in MQTT v3.1,If the Client ID contains more than 23 characters, the server responds to
+         * the CONNECT message with a CONNACK return code 2: Identifier Rejected.
+         * */
+        char client_id[200];
+        /* in MQTT v3.1, it is recommended that passwords are kept to 12 characters or fewer, but
+         * it is not required. */
+        char username[200];
+        /*in MQTT v3.1, It is recommended that passwords are kept to 12 characters or fewer, but
+         * it is not required. */
+        char password[200];
+        /* user define it, and change size of device id. */
+        char device_id[200];
+} REG_info;
+
+
 typedef void (*messageHandler)(MessageData*);
 typedef void (*extendedmessageHandler)(EXTED_CMD cmd, int status, int ret_string_len, char *ret_string);
 
@@ -63,6 +79,10 @@ int MQTTSubscribe (Client*, const char*, enum QoS, messageHandler);
 int MQTTUnsubscribe (Client*, const char*);
 int MQTTDisconnect (Client*);
 int MQTTYield (Client*, int);
+
+int MQTTClient_get_host(char *appkey, char* url);
+int MQTTClient_setup_with_appkey(char* appkey, REG_info *info);
+int MQTTClient_setup_with_appkey_and_deviceid(char* appkey, char *deviceid, REG_info *info);
 
 int MQTTSetAlias(Client*, const char*);
 int MQTTPublishToAlias(Client* c, const char* alias, void *payload, int payloadlen);

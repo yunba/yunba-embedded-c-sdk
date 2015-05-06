@@ -88,6 +88,8 @@ struct opts_struct
 	char* host;
 	int port;
 	int showtopics;
+	char *appkey;
+	char *deviceid;
 } opts =
 {
 	(char*)"stdout-subscriber", 0, (char*)"\n", QOS2, NULL, NULL, (char*)"localhost", 1883, 0
@@ -172,9 +174,22 @@ void getopts(int argc, char** argv)
 			else
 				usage();
 		}
+		else if (strcmp(argv[count], "--appkey") == 0)
+		{
+			if (++count < argc)
+				opts.appkey = argv[count];
+			else
+				usage();
+		}
+		else if (strcmp(argv[count], "--deviceid") == 0)
+		{
+			if (++count < argc)
+				opts.deviceid = argv[count];
+			else
+				usage();
+		}
 		count++;
 	}
-	
 }
 
 
@@ -197,6 +212,23 @@ static void extMessageArrive(EXTED_CMD cmd, int status, int ret_string_len, char
 	printf("%s, cmd:%d, status:%d, payload: %.*s\n", __func__, cmd, status, ret_string_len, ret_string);
 }
 
+static int get_ip_pair(const char *url, char *addr, int *port)
+{
+	char *p = strstr(url, "tcp://");
+	if (p) {
+		p += 6;
+		char *q = strstr(p, ":");
+		if (q) {
+			int len = strlen(p) - strlen(q);
+			if (len > 0) {
+				sprintf(addr, "%.*s", len, p);
+				*port = atoi(q + 1);
+				return SUCCESS;
+			}
+		}
+	}
+	return FAILURE;
+}
 
 int main(int argc, char** argv)
 {
@@ -222,20 +254,34 @@ int main(int argc, char** argv)
 	signal(SIGINT, cfinish);
 	signal(SIGTERM, cfinish);
 
+	REG_info reg;
+	rc = MQTTClient_setup_with_appkey_and_deviceid(opts.appkey, opts.deviceid, &reg);
+	printf("get reg info: client-id:%s, username:%s, password:%s, deviceid:%s\n",
+			reg.client_id, reg.username, reg.password, reg.device_id);
+
+	char url[50];
+	MQTTClient_get_host(opts.appkey, url);
+	printf("get broker: %s\n", url);
+
 	NewNetwork(&n);
-	ConnectNetwork(&n, opts.host, opts.port);
+
+	char ip[100];
+	int port = 1883;
+	get_ip_pair(url, ip, &port);
+	ConnectNetwork(&n, /*opts.host*/ip, /*opts.port*/port);
 	MQTTClient(&c, &n, 1000, buf, 100, readbuf, 100);
  
 	MQTTPacket_connectData data = MQTTPacket_connectData_initializer;       
 	data.willFlag = 0;
 	data.MQTTVersion = 19;
-	data.clientID.cstring = opts.clientid;
-	data.username.cstring = opts.username;
-	data.password.cstring = opts.password;
+	data.clientID.cstring = /*opts.clientid*/reg.client_id;
+	data.username.cstring = /*opts.username*/reg.username;
+	data.password.cstring = /*opts.password*/reg.password;
 
 	data.keepAliveInterval = 10;
 	data.cleansession = 1;
-	printf("Connecting to %s %d\n", opts.host, opts.port);
+
+	printf("Connecting to %s %d\n", /*opts.host*/ip, /*opts.port*/port);
 	
 	rc = MQTTConnect(&c, &data);
 	printf("Connected %d\n", rc);
@@ -274,6 +320,7 @@ int main(int argc, char** argv)
 
 	rc = MQTTGetTopic(&c, "Jerry");
 	printf("get topic %d\n", rc);
+
 
 	while (!toStop)
 	{

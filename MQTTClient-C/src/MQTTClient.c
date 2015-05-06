@@ -667,3 +667,152 @@ int MQTTGetAliasList(Client* c, const char *parameter)
 	int rc = MQTTPublish2(c, GET_ALIAS_LIST, parameter, strlen(parameter), DEFAULT_QOS, DEFAULT_RETAINED);
 	return rc;
 }
+
+
+int MQTTClient_get_host(char *appkey, char* url)
+{
+	int rc = FAILURE;
+	char buf[1024];
+	char json_data[512];
+	sprintf(json_data, "{\"a\":%s,\"n\":%s,\"v\":%s,\"o\":%s}",
+					appkey, /*${networktype}*/"1", "v1.0.0", /*${NetworkOperator}*/"1");
+
+	sprintf(buf,
+			"POST %s HTTP/1.1\r\nHost: %s:%d\r\nAccept: application/json\r\nContent-Type: application/json\r\nContent-Length: %d\n\n%s",
+			"/", "tick.yunba.io", 9999, strlen(json_data), json_data);
+
+	Network n;
+	NewNetwork(&n);
+	int ret = ConnectNetwork(&n, "tick.yunba.io", 9999);
+	ret = n.mqttwrite(&n, buf, strlen(buf), 1000);
+
+	if (ret == strlen(buf)) {
+		memset(buf, 0, sizeof(buf));
+		ret = n.mqttread(&n, buf, sizeof(buf), 3000);
+	//	if (ret > 0) {
+			char *temp = strstr(buf, "\r\n\r\n");
+			if (temp) {
+				temp += 4;
+				char *p= strstr(temp, ":");
+				char *q = strstr(temp, "}");
+				if (p && q) {
+					p += 2;
+					sprintf(url, "%.*s", q-p-1, p);
+					rc = SUCCESS;
+				}
+	//		}
+		}
+	}
+	n.disconnect(&n);
+exit:
+	return rc;
+}
+
+static int get_reg_info_from_json(char *json, REG_info *info)
+{
+	int ru = FAILURE, rp = FAILURE, rc = FAILURE, rd = FAILURE;
+
+	char *u = strstr(json, "\"u\": \"");
+	if (u) {
+		u += 6;
+		sprintf(info->username, "%.*s",19, u);
+		ru = SUCCESS;
+	}
+
+	char *p = strstr(json, "\"p\": \"");
+	if (p) {
+		p += 6;
+		sprintf(info->password, "%.*s",13, p);
+		rp = SUCCESS;
+	}
+
+	char *c = strstr(json, "\"c\": \"");
+	if (c) {
+		c += 6;
+		sprintf(info->client_id, "%.*s",23, c);
+		rc = SUCCESS;
+	}
+
+	char *d = strstr(json, "\"d\": \"");
+	if (d) {
+		d += 6;
+		sprintf(info->device_id, "%.*s",32, d);
+		rd = SUCCESS;
+	}
+
+	return ((rc == SUCCESS && ru == SUCCESS && rp == SUCCESS && rc == SUCCESS)? SUCCESS : FAILURE);
+}
+
+int MQTTClient_setup_with_appkey(char* appkey, REG_info *info)
+{
+	int rc = FAILURE;
+	char buf[1024];
+	char json_data[512];
+
+	if (appkey == NULL)
+		goto exit;
+
+	sprintf(json_data, "{\"a\": \"%s\", \"p\":4}", appkey);\
+	sprintf(buf,
+			"POST %s HTTP/1.1\r\nHost: %s:%d\r\nAccept: application/json\r\nContent-Type: application/json\r\nContent-Length: %d\n\n%s",
+			"/device/reg/", "reg.yunba.io", 8383, strlen(json_data), json_data);
+
+	Network n;
+	NewNetwork(&n);
+	int ret = ConnectNetwork(&n, "reg.yunba.io", 8383);
+	ret = n.mqttwrite(&n, buf, strlen(buf), 1000);
+
+	if (ret == strlen(buf)) {
+		memset(buf, 0, sizeof(buf));
+		ret = n.mqttread(&n, buf, sizeof(buf), 3000);
+	//	if (ret > 0) {
+			char *temp = strstr(buf, "\r\n\r\n");
+			if (temp) {
+				temp += 4;
+				rc = get_reg_info_from_json(temp, info);
+			}
+//		}
+	}
+	n.disconnect(&n);
+exit:
+	return rc;
+}
+
+int MQTTClient_setup_with_appkey_and_deviceid(char* appkey, char *deviceid, REG_info *info)
+{
+	int rc = FAILURE;
+	char buf[1024];
+	char json_data[512];
+
+	if (appkey == NULL)
+		goto exit;
+
+    if (deviceid == NULL)
+            sprintf(json_data, "{\"a\": \"%s\", \"p\":4}", appkey);
+    else
+            sprintf(json_data, "{\"a\": \"%s\", \"p\":4, \"d\": \"%s\"}", appkey, deviceid);
+
+	sprintf(buf,
+			"POST %s HTTP/1.1\r\nHost: %s:%d\r\nAccept: application/json\r\nContent-Type: application/json\r\nContent-Length: %d\n\n%s",
+			"/device/reg/", "reg.yunba.io", 8383, strlen(json_data), json_data);
+
+	Network n;
+	NewNetwork(&n);
+	int ret = ConnectNetwork(&n, "reg.yunba.io", 8383);
+	ret = n.mqttwrite(&n, buf, strlen(buf), 1000);
+
+	if (ret == strlen(buf)) {
+		memset(buf, 0, sizeof(buf));
+		ret = n.mqttread(&n, buf, sizeof(buf), 3000);
+	//	if (ret > 0) {
+			char *temp = strstr(buf, "\r\n\r\n");
+			if (temp) {
+				temp += 4;
+				rc = get_reg_info_from_json(temp, info);
+			}
+//		}
+	}
+	n.disconnect(&n);
+exit:
+	return rc;
+}
