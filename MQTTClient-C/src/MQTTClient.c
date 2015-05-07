@@ -13,7 +13,8 @@
  * Contributors:
  *    Allan Stockdill-Mander/Ian Craggs - initial API and implementation and/or initial documentation
  *******************************************************************************/
-
+//#include "Stdio.h"
+//#include "String.h"
 #include "MQTTClient.h"
 
 void NewMessageData(MessageData* md, MQTTString* aTopicName, MQTTMessage* aMessgage) {
@@ -222,10 +223,11 @@ int keepalive(Client* c)
     {
         if (!c->ping_outstanding)
         {
+			int len;
             Timer timer;
             InitTimer(&timer);
             countdown_ms(&timer, 1000);
-            int len = MQTTSerialize_pingreq(c->buf, c->buf_size);
+			len = MQTTSerialize_pingreq(c->buf, c->buf_size);
             if (len > 0 && (rc = sendPacket(c, len, &timer)) == SUCCESS) // send the ping packet
                 c->ping_outstanding = 1;
         }
@@ -259,7 +261,7 @@ int cycle(Client* c, Timer* timer)
             MQTTMessage msg;
             EXTED_CMD cmd;
             int status;
-            if (MQTTDeserialize_publish2((unsigned char*)&msg.dup, (int*)&msg.qos, (unsigned char*)&msg.retained, (unsigned short*)&msg.id, &cmd,
+            if (MQTTDeserialize_publish2((unsigned char*)&msg.dup, (int*)&msg.qos, (unsigned char*)&msg.retained, (uint64_t*)&msg.id, &cmd,
                &status, (unsigned char**)&msg.payload, (int*)&msg.payloadlen, c->readbuf, c->readbuf_size) != 1)
                 goto exit;
             deliverextMessage(c, cmd, status, msg.payloadlen, msg.payload);
@@ -270,7 +272,7 @@ int cycle(Client* c, Timer* timer)
         {
             MQTTString topicName;
             MQTTMessage msg;
-            if (MQTTDeserialize_publish((unsigned char*)&msg.dup, (int*)&msg.qos, (unsigned char*)&msg.retained, (unsigned short*)&msg.id, &topicName,
+            if (MQTTDeserialize_publish((unsigned char*)&msg.dup, (int*)&msg.qos, (unsigned char*)&msg.retained, (uint64_t*)&msg.id, &topicName,
                (unsigned char**)&msg.payload, (int*)&msg.payloadlen, c->readbuf, c->readbuf_size) != 1)
                 goto exit;
             deliverMessage(c, &topicName, &msg);
@@ -291,7 +293,7 @@ int cycle(Client* c, Timer* timer)
         }
         case PUBREC:
         {
-            unsigned short mypacketid;
+            uint64_t mypacketid;
             unsigned char dup, type;
             if (MQTTDeserialize_ack(&type, &dup, &mypacketid, c->readbuf, c->readbuf_size) != 1)
                 rc = FAILURE;
@@ -450,10 +452,11 @@ exit:
 int MQTTUnsubscribe(Client* c, const char* topicFilter)
 {   
     int rc = FAILURE;
+	int len = 0;
+
     Timer timer;    
     MQTTString topic = MQTTString_initializer;
     topic.cstring = (char *)topicFilter;
-    int len = 0;
 
     InitTimer(&timer);
     countdown_ms(&timer, c->command_timeout_ms);
@@ -483,10 +486,10 @@ exit:
 int MQTTPublish(Client* c, const char* topicName, MQTTMessage* message)
 {
     int rc = FAILURE;
+	int len = 0;
     Timer timer;   
     MQTTString topic = MQTTString_initializer;
     topic.cstring = (char *)topicName;
-    int len = 0;
 
     InitTimer(&timer);
     countdown_ms(&timer, c->command_timeout_ms);
@@ -553,10 +556,10 @@ int MQTTDisconnect(Client* c)
 int MQTTSetAlias(Client* c, const char* alias)
 {
 	int rc = 0;
-	MQTTMessage M;
-	M.qos = 1;
 	/*TODO: buffer size ?? */
 	char temp[100];
+	MQTTMessage M;
+	M.qos = 1;
 	strcpy(temp, alias);
 	M.payload = temp;
 	M.id = getNextPacketId(c);
@@ -568,10 +571,10 @@ int MQTTSetAlias(Client* c, const char* alias)
 int MQTTPublishToAlias(Client* c, const char* alias, void *payload, int payloadlen)
 {
 	int rc = 0;
-	MQTTMessage M;
-	M.qos = 1;
 	/*TODO: buffer size ?? */
 	char topic[100];
+	MQTTMessage M;
+	M.qos = 1;
 	sprintf(topic, ",yta/%s", alias);
 	M.payload = payload;
 	M.id = getNextPacketId(c);
@@ -583,14 +586,14 @@ int MQTTPublishToAlias(Client* c, const char* alias, void *payload, int payloadl
 int MQTTReport(Client* c, const char* action, const char *data)
 {
 	int rc = 0;
-	MQTTMessage M;
-	M.qos = 1;
 	/*TODO: buffer size ?? */
 	char topic[100];
-	sprintf(topic, "$$report/%s", action);
-	M.payload = data;
+	MQTTMessage M;
+	M.qos = 1;
+	M.payload = (void *)data;
 	M.id = getNextPacketId(c);
 	M.payloadlen = strlen(data);
+	sprintf(topic, "$$report/%s", action);
 	rc = MQTTPublish(c, topic, &M);
 	return rc;
 }
@@ -646,25 +649,25 @@ int MQTTSetExtCmdCallBack(Client *c, extendedmessageHandler cb)
 
 int MQTTGetAlias(Client* c, const char *param)
 {
-	int rc = MQTTPublish2(c, GET_ALIAS, param, strlen(param), DEFAULT_QOS, DEFAULT_RETAINED);
+	int rc = MQTTPublish2(c, GET_ALIAS, (void *)param, strlen(param), DEFAULT_QOS, DEFAULT_RETAINED);
 	return rc;
 }
 
 int MQTTGetTopic(Client* c, const char *parameter)
 {
-	int rc = MQTTPublish2(c, GET_TOPIC, parameter, strlen(parameter), DEFAULT_QOS, DEFAULT_RETAINED);
+	int rc = MQTTPublish2(c, GET_TOPIC, (void *)parameter, strlen(parameter), DEFAULT_QOS, DEFAULT_RETAINED);
 	return rc;
 }
 
 int MQTTGetStatus(Client* c, const char *parameter)
 {
-	int rc = MQTTPublish2(c, GET_STATUS, parameter, strlen(parameter), DEFAULT_QOS, DEFAULT_RETAINED);
+	int rc = MQTTPublish2(c, GET_STATUS, (void *)parameter, strlen(parameter), DEFAULT_QOS, DEFAULT_RETAINED);
 	return rc;
 }
 
 int MQTTGetAliasList(Client* c, const char *parameter)
 {
-	int rc = MQTTPublish2(c, GET_ALIAS_LIST, parameter, strlen(parameter), DEFAULT_QOS, DEFAULT_RETAINED);
+	int rc = MQTTPublish2(c, GET_ALIAS_LIST, (void *)parameter, strlen(parameter), DEFAULT_QOS, DEFAULT_RETAINED);
 	return rc;
 }
 
@@ -674,6 +677,9 @@ int MQTTClient_get_host(char *appkey, char* url)
 	int rc = FAILURE;
 	char buf[1024];
 	char json_data[512];
+	Network n;
+	int ret;
+
 	sprintf(json_data, "{\"a\":%s,\"n\":%s,\"v\":%s,\"o\":%s}",
 					appkey, /*${networktype}*/"1", "v1.0.0", /*${NetworkOperator}*/"1");
 
@@ -681,20 +687,21 @@ int MQTTClient_get_host(char *appkey, char* url)
 			"POST %s HTTP/1.1\r\nHost: %s:%d\r\nAccept: application/json\r\nContent-Type: application/json\r\nContent-Length: %d\n\n%s",
 			"/", "tick.yunba.io", 9999, strlen(json_data), json_data);
 
-	Network n;
 	NewNetwork(&n);
-	int ret = ConnectNetwork(&n, "tick.yunba.io", 9999);
+	ret = ConnectNetwork(&n, "tick.yunba.io", 9999);
 	ret = n.mqttwrite(&n, buf, strlen(buf), 1000);
 
 	if (ret == strlen(buf)) {
+		char *temp;
 		memset(buf, 0, sizeof(buf));
 		ret = n.mqttread(&n, buf, sizeof(buf), 3000);
 	//	if (ret > 0) {
-			char *temp = strstr(buf, "\r\n\r\n");
+			temp = strstr(buf, "\r\n\r\n");
 			if (temp) {
+				char *p, *q;
 				temp += 4;
-				char *p= strstr(temp, ":");
-				char *q = strstr(temp, "}");
+				p= strstr(temp, ":");
+				q = strstr(temp, "}");
 				if (p && q) {
 					p += 2;
 					sprintf(url, "%.*s", q-p-1, p);
@@ -711,29 +718,30 @@ exit:
 static int get_reg_info_from_json(char *json, REG_info *info)
 {
 	int ru = FAILURE, rp = FAILURE, rc = FAILURE, rd = FAILURE;
+	char *u, *p, *c, *d;
 
-	char *u = strstr(json, "\"u\": \"");
+	u = strstr(json, "\"u\": \"");
 	if (u) {
 		u += 6;
 		sprintf(info->username, "%.*s",19, u);
 		ru = SUCCESS;
 	}
 
-	char *p = strstr(json, "\"p\": \"");
+	p = strstr(json, "\"p\": \"");
 	if (p) {
 		p += 6;
 		sprintf(info->password, "%.*s",13, p);
 		rp = SUCCESS;
 	}
 
-	char *c = strstr(json, "\"c\": \"");
+	c = strstr(json, "\"c\": \"");
 	if (c) {
 		c += 6;
 		sprintf(info->client_id, "%.*s",23, c);
 		rc = SUCCESS;
 	}
 
-	char *d = strstr(json, "\"d\": \"");
+	d = strstr(json, "\"d\": \"");
 	if (d) {
 		d += 6;
 		sprintf(info->device_id, "%.*s",32, d);
@@ -748,6 +756,8 @@ int MQTTClient_setup_with_appkey(char* appkey, REG_info *info)
 	int rc = FAILURE;
 	char buf[1024];
 	char json_data[512];
+	int ret;
+	Network n;
 
 	if (appkey == NULL)
 		goto exit;
@@ -757,16 +767,16 @@ int MQTTClient_setup_with_appkey(char* appkey, REG_info *info)
 			"POST %s HTTP/1.1\r\nHost: %s:%d\r\nAccept: application/json\r\nContent-Type: application/json\r\nContent-Length: %d\n\n%s",
 			"/device/reg/", "reg.yunba.io", 8383, strlen(json_data), json_data);
 
-	Network n;
 	NewNetwork(&n);
-	int ret = ConnectNetwork(&n, "reg.yunba.io", 8383);
+	ret = ConnectNetwork(&n, "reg.yunba.io", 8383);
 	ret = n.mqttwrite(&n, buf, strlen(buf), 1000);
 
 	if (ret == strlen(buf)) {
+		char *temp;
 		memset(buf, 0, sizeof(buf));
 		ret = n.mqttread(&n, buf, sizeof(buf), 3000);
 	//	if (ret > 0) {
-			char *temp = strstr(buf, "\r\n\r\n");
+			temp = strstr(buf, "\r\n\r\n");
 			if (temp) {
 				temp += 4;
 				rc = get_reg_info_from_json(temp, info);
@@ -783,6 +793,8 @@ int MQTTClient_setup_with_appkey_and_deviceid(char* appkey, char *deviceid, REG_
 	int rc = FAILURE;
 	char buf[1024];
 	char json_data[512];
+	int ret;
+	Network n;
 
 	if (appkey == NULL)
 		goto exit;
@@ -796,16 +808,16 @@ int MQTTClient_setup_with_appkey_and_deviceid(char* appkey, char *deviceid, REG_
 			"POST %s HTTP/1.1\r\nHost: %s:%d\r\nAccept: application/json\r\nContent-Type: application/json\r\nContent-Length: %d\n\n%s",
 			"/device/reg/", "reg.yunba.io", 8383, strlen(json_data), json_data);
 
-	Network n;
 	NewNetwork(&n);
-	int ret = ConnectNetwork(&n, "reg.yunba.io", 8383);
+	ret = ConnectNetwork(&n, "reg.yunba.io", 8383);
 	ret = n.mqttwrite(&n, buf, strlen(buf), 1000);
 
 	if (ret == strlen(buf)) {
+		char *temp;
 		memset(buf, 0, sizeof(buf));
 		ret = n.mqttread(&n, buf, sizeof(buf), 3000);
 	//	if (ret > 0) {
-			char *temp = strstr(buf, "\r\n\r\n");
+			temp = strstr(buf, "\r\n\r\n");
 			if (temp) {
 				temp += 4;
 				rc = get_reg_info_from_json(temp, info);
