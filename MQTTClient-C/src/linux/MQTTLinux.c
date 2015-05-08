@@ -16,6 +16,11 @@
 
 #include "MQTTLinux.h"
 
+#include <sys/time.h>
+#include <inttypes.h>
+#include <math.h>
+
+
 char expired(Timer* timer)
 {
 	struct timeval now, res;
@@ -164,4 +169,22 @@ int ConnectNetwork(Network* n, char* addr, int port)
 	}
 
 	return rc;
+}
+
+unsigned long long int randm(int n) {
+	double x;
+	unsigned long long int y;
+	srand(getpid());
+	x = rand() / (double)RAND_MAX;
+	y = (unsigned long long int) (x * pow(10.0, n*1.0));
+	return y;
+}
+
+uint64_t generate_uuid() {
+	struct timeval t_start;
+	gettimeofday(&t_start, NULL);
+	uint64_t ms = ((uint64_t)t_start.tv_sec * 1000) + (uint64_t)t_start.tv_usec/1000;
+	uint64_t id = ms << (64 - 41);
+	id |= (uint64_t)(randm(16) % (unsigned long long int)(pow(2, (64 - 41))));
+	return id;
 }

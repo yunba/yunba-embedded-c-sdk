@@ -24,7 +24,8 @@ void NewMessageData(MessageData* md, MQTTString* aTopicName, MQTTMessage* aMessg
 
 
 uint64_t getNextPacketId(Client *c) {
-    return c->next_packetid = (c->next_packetid == MAX_PACKET_ID) ? 1 : c->next_packetid + 1;
+	c->next_packetid = generate_uuid();
+    return c->next_packetid;
 }
 
 

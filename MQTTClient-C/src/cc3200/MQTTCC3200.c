@@ -194,3 +194,9 @@ int ConnectNetwork(Network* n, char* addr, int port)
 
 	return retVal;
 }
+
+uint64_t generate_uuid()
+{
+	//TODO:
+	return 0;
+}
