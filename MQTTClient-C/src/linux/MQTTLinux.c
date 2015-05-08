@@ -171,7 +171,7 @@ int ConnectNetwork(Network* n, char* addr, int port)
 	return rc;
 }
 
-unsigned long long int randm(int n) {
+static unsigned long long int randm(int n) {
 	double x;
 	unsigned long long int y;
 	srand(getpid());

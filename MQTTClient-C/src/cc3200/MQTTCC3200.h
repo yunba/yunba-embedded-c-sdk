@@ -55,4 +55,6 @@ void NewNetwork(Network*);
 int ConnectNetwork(Network*, char*, int);
 int TLSConnectNetwork(Network*, char*, int, SlSockSecureFiles_t*, unsigned char, unsigned int, char);
 
+uint64_t generate_uuid();
+
 #endif

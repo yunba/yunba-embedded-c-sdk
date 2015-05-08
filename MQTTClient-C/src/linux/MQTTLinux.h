@@ -65,4 +65,6 @@ void NewNetwork(Network*);
 
 int ConnectNetwork(Network*, char*, int);
 
+uint64_t generate_uuid();
+
 #endif
