@@ -681,7 +681,7 @@ int MQTTClient_get_host(char *appkey, char* url)
 	Network n;
 	int ret;
 
-	sprintf(json_data, "{\"a\":%s,\"n\":%s,\"v\":%s,\"o\":%s}",
+	sprintf(json_data, "{\"a\":\"%s\",\"n\":\"%s\",\"v\":\"%s\",\"o\":\"%s\"}",
 					appkey, /*${networktype}*/"1", "v1.0.0", /*${NetworkOperator}*/"1");
 
 	sprintf(buf,
