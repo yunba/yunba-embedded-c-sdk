@@ -163,29 +163,30 @@ int deliverMessage(Client* c, MQTTString* topicName, MQTTMessage* message)
     int rc = FAILURE;
 
     // we have to find the right message handler - indexed by topic
-    for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i)
-    {
-//    	printf("%s, %s, %s\n", __func__, topicName->cstring, c->messageHandlers[i].topicFilter);
-        if (c->messageHandlers[i].topicFilter != 0 && (MQTTPacket_equals(topicName, (char*)c->messageHandlers[i].topicFilter) ||
-                isTopicMatched((char*)c->messageHandlers[i].topicFilter, topicName)))
+//    for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i)
+//    {
+ //   	printf("%s, %s, %s\n", __func__, topicName->cstring, c->messageHandlers[i].topicFilter);
+  //      if (c->messageHandlers[i].topicFilter != 0 && (MQTTPacket_equals(topicName, (char*)c->messageHandlers[i].topicFilter) ||
+  //              isTopicMatched((char*)c->messageHandlers[i].topicFilter, topicName)))
         {
-            if (c->messageHandlers[i].fp != NULL)
+    //        if (c->messageHandlers[i].fp != NULL)
             {
+
                 MessageData md;
                 NewMessageData(&md, topicName, message);
-                c->messageHandlers[i].fp(&md);
+                c->messageHandlers[0].fp(&md);
                 rc = SUCCESS;
             }
         }
-    }
+  //  }
     
-    if (rc == FAILURE && c->defaultMessageHandler != NULL) 
-    {
-        MessageData md;
-        NewMessageData(&md, topicName, message);
-        c->defaultMessageHandler(&md);
-        rc = SUCCESS;
-    }   
+//    if (rc == FAILURE && c->defaultMessageHandler != NULL)
+//    {
+//        MessageData md;
+//        NewMessageData(&md, topicName, message);
+//        c->defaultMessageHandler(&md);
+//        rc = SUCCESS;
+//    }
     
     return rc;
 }
@@ -193,18 +194,19 @@ int deliverMessage(Client* c, MQTTString* topicName, MQTTMessage* message)
 int deliverextMessage(Client* c, EXTED_CMD cmd, int status, int ret_string_len, char *ret_string)
 {
 		int i;
-		int rc = FAILURE;
+		int rc = SUCCESS;
 
 	    // we have to find the right message handler - indexed by topic
-	    for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i)
-	    {
-		if (c->extmessageHandlers[i].cb != NULL && c->extmessageHandlers[i].cmd > 0)
-	    	{
-			c->extmessageHandlers[i].cb(cmd, status, ret_string_len, ret_string);
-			rc = SUCCESS;
-			break;
-	    	}
-	    }
+//	    for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i)
+//	    {
+//		if (c->extmessageHandlers[i].cb != NULL && c->extmessageHandlers[i].cmd > 0)
+//	    	{
+//			c->extmessageHandlers[i].cb(cmd, status, ret_string_len, ret_string);
+//			rc = SUCCESS;
+//			break;
+//	    	}
+//	    }
+		c->extmessageHandlers[0].cb(cmd, status, ret_string_len, ret_string);
 
 	    return rc;
 }
@@ -399,7 +401,7 @@ exit:
 }
 
 
-int MQTTSubscribe(Client* c, const char* topicFilter, enum QoS qos, messageHandler messageHandler)
+int MQTTSubscribe(Client* c, const char* topicFilter, enum QoS qos)
 { 
     int rc = FAILURE;  
     Timer timer;
@@ -425,22 +427,6 @@ int MQTTSubscribe(Client* c, const char* topicFilter, enum QoS qos, messageHandl
         uint64_t mypacketid;
         if (MQTTDeserialize_suback(&mypacketid, 1, &count, &grantedQoS, c->readbuf, c->readbuf_size) == 1)
             rc = grantedQoS; // 0, 1, 2 or 0x80 
-
-
-        if (rc != 0x80)
-        {
-            int i;
-            for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i)
-            {
-                if (c->messageHandlers[i].topicFilter == 0)
-                {
-                    c->messageHandlers[i].topicFilter = topicFilter;
-                    c->messageHandlers[i].fp = messageHandler;
-                    rc = 0;
-                    break;
-                }
-            }
-        }
     }
     else 
         rc = FAILURE;
@@ -632,19 +618,16 @@ exit:
     return rc;
 }
 
-int MQTTSetExtCmdCallBack(Client *c, extendedmessageHandler cb)
+int MQTTSetCallBack(Client *c, messageHandler cb, extendedmessageHandler ext_cb)
 {
-	int i, rc = FAILURE;
-    for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i)
-    {
-//        if (c->extmessageHandlers[i].cmd == NULL)
-        {
-            c->extmessageHandlers[i].cmd = 1;
-            c->extmessageHandlers[i].cb = cb;
-            rc = 0;
-            break;
-        }
-    }
+	int rc = SUCCESS;
+
+	c->extmessageHandlers[0].cmd = 1;
+	c->extmessageHandlers[0].cb = ext_cb;
+
+	c->messageHandlers[0].topicFilter = 0;
+	c->messageHandlers[0].fp = cb;
+
     return rc;
 }
 

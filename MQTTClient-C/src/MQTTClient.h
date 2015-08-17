@@ -75,7 +75,7 @@ typedef struct Client Client;
 
 int MQTTConnect (Client*, MQTTPacket_connectData*);
 int MQTTPublish (Client*, const char*, MQTTMessage*);
-int MQTTSubscribe (Client*, const char*, enum QoS, messageHandler);
+int MQTTSubscribe (Client*, const char*, enum QoS);
 int MQTTUnsubscribe (Client*, const char*);
 int MQTTDisconnect (Client*);
 int MQTTYield (Client*, int);
@@ -91,7 +91,7 @@ int MQTTGetAlias(Client* c, const char *param);
 int MQTTGetTopic(Client* c, const char *parameter);
 int MQTTGetStatus(Client* c, const char *parameter);
 int MQTTGetAliasList(Client* c, const char *parameter);
-int MQTTSetExtCmdCallBack(Client *c, extendedmessageHandler);
+int MQTTSetCallBack(Client *c, messageHandler, extendedmessageHandler);
 
 void setDefaultMessageHandler(Client*, messageHandler);
 

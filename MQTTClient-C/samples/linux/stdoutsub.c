@@ -278,19 +278,19 @@ int main(int argc, char** argv)
 	data.username.cstring = /*opts.username*/reg.username;
 	data.password.cstring = /*opts.password*/reg.password;
 
-	data.keepAliveInterval = 10;
-	data.cleansession = 1;
+	data.keepAliveInterval = 100;
+	data.cleansession = 0;
 
 	printf("Connecting to %s %d\n", /*opts.host*/ip, /*opts.port*/port);
 	
 	rc = MQTTConnect(&c, &data);
 	printf("Connected %d\n", rc);
     
-	MQTTSetExtCmdCallBack(&c, extMessageArrive);
+	MQTTSetCallBack(&c, messageArrived, extMessageArrive);
 
 //    rc = MQTTUnsubscribe(&c, "hello");
 
-	rc = MQTTSubscribe(&c, topic, opts.qos, messageArrived);
+	rc = MQTTSubscribe(&c, topic, QOS1);
 	printf("Subscribed %d\n", rc);
 
 	MQTTMessage M;
@@ -306,7 +306,7 @@ int main(int argc, char** argv)
 	rc = MQTTSetAlias(&c, "Jerry");
 	printf("set alias %d\n", rc);
 
-	rc = MQTTPublishToAlias(&c, "baidu", "Hello", strlen("Hello"));
+	rc = MQTTPublishToAlias(&c, "Jerry", "Hello", strlen("Hello"));
 	printf("publish to alias %d\n", rc);
 
 	rc = MQTTGetAlias(&c, "unknow");
