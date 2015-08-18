@@ -224,7 +224,8 @@ int keepalive(Client* c)
 
     if (expired(&c->ping_timer))
     {
-        if (!c->ping_outstanding)
+	//FIXME: If no ping response, should disconnect and try re-connecting...
+//        if (!c->ping_outstanding)
         {
 			int len;
             Timer timer;

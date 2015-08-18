@@ -278,7 +278,7 @@ int main(int argc, char** argv)
 	data.username.cstring = /*opts.username*/reg.username;
 	data.password.cstring = /*opts.password*/reg.password;
 
-	data.keepAliveInterval = 100;
+	data.keepAliveInterval = 200;
 	data.cleansession = 0;
 
 	printf("Connecting to %s %d\n", /*opts.host*/ip, /*opts.port*/port);
