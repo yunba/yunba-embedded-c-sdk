@@ -8,7 +8,7 @@
 #include "MQTTPacket.h"
 #include <string.h>
 
-int MQTTDeserialize_publish2(unsigned char* dup, int* qos, unsigned char* retained, uint64_t* packetid,
+int MQTTDeserialize_extendedcmd(unsigned char* dup, int* qos, unsigned char* retained, uint64_t* packetid,
 		EXTED_CMD* cmd, int *status,
 		void** payload, int* payloadlen, unsigned char* buf, int buflen)
 {
@@ -20,7 +20,7 @@ int MQTTDeserialize_publish2(unsigned char* dup, int* qos, unsigned char* retain
 
 	FUNC_ENTRY;
 	header.byte = readChar(&curdata);
-	if (header.bits.type != PUBLISH2)
+	if (header.bits.type != EXTCMD)
 		goto exit;
 	*dup = header.bits.dup;
 	*qos = header.bits.qos;

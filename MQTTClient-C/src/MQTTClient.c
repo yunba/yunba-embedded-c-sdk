@@ -15,6 +15,7 @@
  *******************************************************************************/
 //#include "Stdio.h"
 //#include "String.h"
+#include "cJSON.h"
 #include "MQTTClient.h"
 
 void NewMessageData(MessageData* md, MQTTString* aTopicName, MQTTMessage* aMessgage) {
@@ -259,13 +260,13 @@ int cycle(Client* c, Timer* timer)
         case PUBACK:
         case SUBACK:
             break;
-        case PUBLISH2:
+        case EXTCMD:
         {
             MQTTString topicName;
             MQTTMessage msg;
             EXTED_CMD cmd;
             int status;
-            if (MQTTDeserialize_publish2((unsigned char*)&msg.dup, (int*)&msg.qos, (unsigned char*)&msg.retained, (uint64_t*)&msg.id, &cmd,
+            if (MQTTDeserialize_extendedcmd((unsigned char*)&msg.dup, (int*)&msg.qos, (unsigned char*)&msg.retained, (uint64_t*)&msg.id, &cmd,
                &status, (unsigned char**)&msg.payload, (int*)&msg.payloadlen, c->readbuf, c->readbuf_size) != 1)
                 goto exit;
             deliverextMessage(c, cmd, status, msg.payloadlen, msg.payload);
@@ -571,6 +572,10 @@ int MQTTPublishToAlias(Client* c, const char* alias, void *payload, int payloadl
 	return rc;
 }
 
+
+
+
+
 int MQTTReport(Client* c, const char* action, const char *data)
 {
 	int rc = 0;
@@ -588,7 +593,7 @@ int MQTTReport(Client* c, const char* action, const char *data)
 
 #define DEFAULT_QOS 1
 #define DEFAULT_RETAINED 0
-int MQTTPublish2(Client* c, EXTED_CMD cmd, void *payload, int payload_len, int qos, unsigned char retained)
+int MQTTExtendedCmd(Client* c, EXTED_CMD cmd, void *payload, int payload_len, int qos, unsigned char retained)
 {
     int rc = FAILURE;
     Timer timer;
@@ -604,14 +609,15 @@ int MQTTPublish2(Client* c, EXTED_CMD cmd, void *payload, int payload_len, int q
     if (qos == QOS1 || qos == QOS2)
         id = getNextPacketId(c);
 
-    len = MQTTSerialize_publish2(c->buf, c->buf_size, 0, qos, retained, id,
+    len = MQTTSerialize_extendedcmd(c->buf, c->buf_size, 0, qos, retained, id,
     		cmd, payload, payload_len);
+
     if (len <= 0)
         goto exit;
     if ((rc = sendPacket(c, len, &timer)) != SUCCESS) // send the subscribe packet
         goto exit; // there was a problem
 
-    if (waitfor(c, PUBLISH2, &timer) == PUBLISH2) {
+    if (waitfor(c, EXTCMD, &timer) == EXTCMD) {
     	rc = SUCCESS;
     }
 
@@ -634,26 +640,102 @@ int MQTTSetCallBack(Client *c, messageHandler cb, extendedmessageHandler ext_cb)
 
 int MQTTGetAlias(Client* c, const char *param)
 {
-	int rc = MQTTPublish2(c, GET_ALIAS, (void *)param, strlen(param), DEFAULT_QOS, DEFAULT_RETAINED);
+	int rc = MQTTExtendedCmd(c, GET_ALIAS, (void *)param, strlen(param), DEFAULT_QOS, DEFAULT_RETAINED);
 	return rc;
 }
 
 int MQTTGetTopic(Client* c, const char *parameter)
 {
-	int rc = MQTTPublish2(c, GET_TOPIC, (void *)parameter, strlen(parameter), DEFAULT_QOS, DEFAULT_RETAINED);
+	int rc = MQTTExtendedCmd(c, GET_TOPIC, (void *)parameter, strlen(parameter), DEFAULT_QOS, DEFAULT_RETAINED);
 	return rc;
 }
 
 int MQTTGetStatus(Client* c, const char *parameter)
 {
-	int rc = MQTTPublish2(c, GET_STATUS, (void *)parameter, strlen(parameter), DEFAULT_QOS, DEFAULT_RETAINED);
+	int rc = MQTTExtendedCmd(c, GET_STATUS, (void *)parameter, strlen(parameter), DEFAULT_QOS, DEFAULT_RETAINED);
 	return rc;
 }
 
 int MQTTGetAliasList(Client* c, const char *parameter)
 {
-	int rc = MQTTPublish2(c, GET_ALIAS_LIST, (void *)parameter, strlen(parameter), DEFAULT_QOS, DEFAULT_RETAINED);
+	int rc = MQTTExtendedCmd(c, GET_ALIAS_LIST, (void *)parameter, strlen(parameter), DEFAULT_QOS, DEFAULT_RETAINED);
 	return rc;
+}
+
+int MQTTPublish2(Client* c,
+		const char* topicName, void* payload, int payloadlen, cJSON *opt)
+{
+	const char *key[PUBLISH2_TLV_MAX_NUM] =
+	{"topic", "payload", "platform", "time_to_live", "time_delay", "location", "qos", "apn_json"};
+	uint8_t *p;
+	uint8_t pub_buf[1024];
+	uint16_t len, i = 0;
+
+	p = pub_buf;
+
+	*p++ = (uint8_t)PUBLISH2_TLV_PAYLOAD;
+	*p++ = (uint8_t)((payloadlen >> 8) & 0xff);
+	*p++ = (uint8_t)(payloadlen & 0xff);
+	memcpy(p, payload, payloadlen);
+	p += payloadlen;
+
+	len = strlen(topicName);
+	*p++ = (uint8_t)PUBLISH2_TLV_TOPIC;
+	*p++ = (uint8_t)((len >> 8) & 0xff);
+	*p++ = (uint8_t)(len & 0xff);
+	memcpy(p, topicName, len);
+	p += len;
+
+	if (opt) {
+		uint8_t j = 0;
+		int size = cJSON_GetArraySize(opt);
+		for (j = 0; j < size; j++) {
+			cJSON * test = cJSON_GetArrayItem(opt, j);
+			uint8_t i = 0;
+			for (i = 0; i < PUBLISH2_TLV_MAX_NUM; i++) {
+				if (strcmp(test->string, key[i]) == 0) {
+					switch (i) {
+					case PUBLISH2_TLV_TTL:
+					case PUBLISH2_TLV_TIME_DELAY:
+					case PUBLISH2_TLV_QOS:
+					{
+						*p++ = (uint8_t)i;
+						*p++ = 0;
+						*p++ = 2;
+						memcpy(p, test->valuestring, 2);
+						p += 2;
+						break;
+					}
+
+					case PUBLISH2_TLV_APN_JSON:
+					{
+						len = strlen(test->valuestring);
+						*p++ = (uint8_t)PUBLISH2_TLV_APN_JSON;
+						*p++ = (uint8_t)((len >> 8) & 0xff);
+						*p++ = (uint8_t)(len & 0xff);
+						memcpy(p, test->valuestring, len);
+						p += len;
+						break;
+					}
+
+					default:
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	return MQTTExtendedCmd(c, PUBLISH2, pub_buf, p-pub_buf, DEFAULT_QOS, DEFAULT_RETAINED);
+}
+
+int MQTTPublish2ToAlias(Client* c,
+				const char* alias, void* payload, int payloadlen, cJSON *opt)
+{
+	char buf[150];
+
+	sprintf(buf, ",yta/%s", alias);
+	return MQTTPublish2(c, buf, payload, payloadlen, opt);
 }
 
 

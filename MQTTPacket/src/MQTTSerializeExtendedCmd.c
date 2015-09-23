@@ -10,7 +10,7 @@
 #include <string.h>
 
 
-int MQTTSerialize_publish2Length(int qos, EXTED_CMD cmd, void *param, int param_len)
+int MQTTSerialize_extendedcmdLength(int qos, EXTED_CMD cmd, void *param, int param_len)
 {
 	int len = 0;
 
@@ -22,7 +22,7 @@ int MQTTSerialize_publish2Length(int qos, EXTED_CMD cmd, void *param, int param_
 }
 
 
-int MQTTSerialize_publish2(unsigned char* buf, int buflen, unsigned char dup, int qos, unsigned char retained, uint64_t packetid,
+int MQTTSerialize_extendedcmd(unsigned char* buf, int buflen, unsigned char dup, int qos, unsigned char retained, uint64_t packetid,
 		EXTED_CMD cmd, void *payload, int payloadlen)
 {
 	unsigned char *ptr = buf;
@@ -31,14 +31,14 @@ int MQTTSerialize_publish2(unsigned char* buf, int buflen, unsigned char dup, in
 	int rc = 0;
 
 	FUNC_ENTRY;
-	if (MQTTPacket_len(rem_len = MQTTSerialize_publish2Length(qos, cmd, payload, payloadlen)) > buflen)
+	if (MQTTPacket_len(rem_len = MQTTSerialize_extendedcmdLength(qos, cmd, payload, payloadlen)) > buflen)
 	{
 		rc = MQTTPACKET_BUFFER_TOO_SHORT;
 		goto exit;
 	}
 //	printf("%s, %i\n", __func__, rem_len);
 
-	header.bits.type = PUBLISH2;
+	header.bits.type = EXTCMD;
 	header.bits.dup = dup;
 	header.bits.qos = qos;
 	header.bits.retain = retained;

@@ -19,6 +19,7 @@
 
 #include "MQTTPacket.h"
 #include "stdio.h"
+#include "cJSON.h"
 #include "" //Platform specific implementation header file
 
 #define MAX_PACKET_ID 65535
@@ -92,6 +93,11 @@ int MQTTGetTopic(Client* c, const char *parameter);
 int MQTTGetStatus(Client* c, const char *parameter);
 int MQTTGetAliasList(Client* c, const char *parameter);
 int MQTTSetCallBack(Client *c, messageHandler, extendedmessageHandler);
+
+int MQTTPublish2(Client* c,
+		const char* topicName, void* payload, int payloadlen, cJSON *opt);
+int MQTTPublish2ToAlias(Client* c,
+				const char* alias, void* payload, int payloadlen, cJSON *opt);
 
 void setDefaultMessageHandler(Client*, messageHandler);
 

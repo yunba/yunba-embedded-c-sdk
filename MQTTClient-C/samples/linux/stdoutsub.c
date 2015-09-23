@@ -233,8 +233,8 @@ static int get_ip_pair(const char *url, char *addr, int *port)
 int main(int argc, char** argv)
 {
 	int rc = 0;
-	unsigned char buf[100];
-	unsigned char readbuf[100];
+	unsigned char buf[200];
+	unsigned char readbuf[200];
 	
 	if (argc < 2)
 		usage();
@@ -269,7 +269,7 @@ int main(int argc, char** argv)
 	int port = 1883;
 	get_ip_pair(url, ip, &port);
 	ConnectNetwork(&n, /*opts.host*/ip, /*opts.port*/port);
-	MQTTClient(&c, &n, 1000, buf, 100, readbuf, 100);
+	MQTTClient(&c, &n, 1000, buf, 300, readbuf, 300);
  
 	MQTTPacket_connectData data = MQTTPacket_connectData_initializer;       
 	data.willFlag = 0;
@@ -320,6 +320,17 @@ int main(int argc, char** argv)
 
 	rc = MQTTGetTopic(&c, "Jerry");
 	printf("get topic %d\n", rc);
+
+	cJSON *apn_json, *aps;
+	cJSON *Opt = cJSON_CreateObject();
+	cJSON_AddStringToObject(Opt,"time_to_live",  "120");
+	cJSON_AddStringToObject(Opt,"time_delay",  "1100");
+	cJSON_AddStringToObject(Opt,"apn_json",  "{\"aps\":{\"alert\":\"FENCE alarm\", \"sound\":\"alarm.mp3\"}}");
+	rc = MQTTPublish2(&c, topic, "test_publish2Tohelloworld", strlen("test_publish2Tohelloworld"), Opt);
+//	printf("publish2 %d\n", rc);
+//	rc = MQTTPublish2ToAlias(&c, "Jerry", "test_publish2ToAlias", strlen("test_publish2ToAlias"), Opt);
+//	printf("publish2_alias %d\n", rc);
+	cJSON_Delete(Opt);
 
 
 	while (!toStop)
