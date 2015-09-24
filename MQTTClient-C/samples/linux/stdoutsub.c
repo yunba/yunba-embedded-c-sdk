@@ -315,11 +315,20 @@ int main(int argc, char** argv)
 	rc = MQTTGetStatus(&c, "Jerry");
 	printf("get status %d\n", rc);
 
+	rc = MQTTGetStatus2(&c, "Jerry");
+	printf("get status2 %d\n", rc);
+
 	rc = MQTTGetAliasList(&c, topic);
 	printf("alias list get %d\n", rc);
 
+	rc = MQTTGetAliasList2(&c, topic);
+	printf("alias list2 get %d\n", rc);
+
 	rc = MQTTGetTopic(&c, "Jerry");
 	printf("get topic %d\n", rc);
+
+	rc = MQTTGetTopic2(&c, "Jerry");
+	printf("get topic2 %d\n", rc);
 
 	cJSON *apn_json, *aps;
 	cJSON *Opt = cJSON_CreateObject();

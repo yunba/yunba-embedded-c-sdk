@@ -99,6 +99,10 @@ int MQTTPublish2(Client* c,
 int MQTTPublish2ToAlias(Client* c,
 				const char* alias, void* payload, int payloadlen, cJSON *opt);
 
+int MQTTGetTopic2(Client* c, const char *alias);
+int MQTTGetStatus2(Client* c, const char *alias);
+int MQTTGetAliasList2(Client* c, const char *topic);
+
 void setDefaultMessageHandler(Client*, messageHandler);
 
 void MQTTClient(Client*, Network*, unsigned int, unsigned char*, size_t, unsigned char*, size_t);

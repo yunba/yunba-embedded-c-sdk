@@ -662,6 +662,24 @@ int MQTTGetAliasList(Client* c, const char *parameter)
 	return rc;
 }
 
+int MQTTGetTopic2(Client* c, const char *alias)
+{
+	int rc = MQTTExtendedCmd(c, GET_TOPIC_LIST2, (void *)alias, strlen(alias), DEFAULT_QOS, DEFAULT_RETAINED);
+	return rc;
+}
+
+int MQTTGetStatus2(Client* c, const char *alias)
+{
+	int rc = MQTTExtendedCmd(c, GET_STATUS2, (void *)alias, strlen(alias), DEFAULT_QOS, DEFAULT_RETAINED);
+	return rc;
+}
+
+int MQTTGetAliasList2(Client* c, const char *topic)
+{
+	int rc = MQTTExtendedCmd(c, GET_ALIASLIST2, (void *)topic, strlen(topic), DEFAULT_QOS, DEFAULT_RETAINED);
+	return rc;
+}
+
 int MQTTPublish2(Client* c,
 		const char* topicName, void* payload, int payloadlen, cJSON *opt)
 {
