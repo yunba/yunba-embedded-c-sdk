@@ -260,7 +260,7 @@ int main(int argc, char** argv)
 			reg.client_id, reg.username, reg.password, reg.device_id);
 
 	char url[50];
-	MQTTClient_get_host(opts.appkey, url);
+	MQTTClient_get_host_v2(opts.appkey, url);
 	printf("get broker: %s\n", url);
 
 	NewNetwork(&n);

@@ -81,6 +81,7 @@ int MQTTUnsubscribe (Client*, const char*);
 int MQTTDisconnect (Client*);
 int MQTTYield (Client*, int);
 
+int MQTTClient_get_host_v2(char *appkey, char* url);
 int MQTTClient_get_host(char *appkey, char* url);
 int MQTTClient_setup_with_appkey(char* appkey, REG_info *info);
 int MQTTClient_setup_with_appkey_and_deviceid(char* appkey, char *deviceid, REG_info *info);
