@@ -825,7 +825,6 @@ int MQTTClient_get_host_v2(char *appkey, char* url)
 	ret = n.mqttwrite(&n, buf, len, 1000);
 
 	if (ret == len) {
-		char *temp;
 		memset(buf, 0, sizeof(buf));
 		ret = n.mqttread(&n, buf, sizeof(buf), 3000);
 		cJSON *root = cJSON_Parse(buf);
@@ -918,6 +917,54 @@ exit:
 	return rc;
 }
 
+int MQTTClient_setup_with_appkey_v2(char* appkey, REG_info *info)
+{
+	int rc = FAILURE;
+	char buf[1024];
+	char json_data[512];
+	int ret;
+	Network n;
+	uint16_t json_len;
+	uint16_t len;
+
+	if (appkey == NULL)
+		goto exit;
+
+	sprintf(json_data, "{\"a\": \"%s\", \"p\":4}", appkey);
+
+	json_len = strlen(json_data);
+	buf[0] = 1; //version
+	buf[1] = (uint8_t)((json_len >> 8) & 0xff);
+	buf[2] = (uint8_t)(json_len & 0xff);
+	len = json_len + 3;
+	memcpy(buf + 3, json_data, json_len);
+
+	NewNetwork(&n);
+	ret = ConnectNetwork(&n, "abj-redismsg-4.yunba.io", 9944);
+	ret = n.mqttwrite(&n, buf, len, 1000);
+
+	if (ret == len) {
+		memset(buf, 0, sizeof(buf));
+		ret = n.mqttread(&n, buf, sizeof(buf), 3000);
+
+		cJSON *root = cJSON_Parse(buf);
+		if (root) {
+			int ret_size = cJSON_GetArraySize(root);
+			if (ret_size >= 4) {
+				strcpy(info->client_id, cJSON_GetObjectItem(root,"c")->valuestring);
+				strcpy(info->username, cJSON_GetObjectItem(root,"u")->valuestring);
+				strcpy(info->password, cJSON_GetObjectItem(root,"p")->valuestring);
+				strcpy(info->device_id, cJSON_GetObjectItem(root,"d")->valuestring);
+				rc = SUCCESS;
+			}
+			cJSON_Delete(root);
+		}
+	}
+	n.disconnect(&n);
+exit:
+	return rc;
+}
+
 int MQTTClient_setup_with_appkey_and_deviceid(char* appkey, char *deviceid, REG_info *info)
 {
 	int rc = FAILURE;
@@ -953,6 +1000,57 @@ int MQTTClient_setup_with_appkey_and_deviceid(char* appkey, char *deviceid, REG_
 				rc = get_reg_info_from_json(temp, info);
 			}
 //		}
+	}
+	n.disconnect(&n);
+exit:
+	return rc;
+}
+
+int MQTTClient_setup_with_appkey_and_deviceid_v2(char* appkey, char *deviceid, REG_info *info)
+{
+	int rc = FAILURE;
+	char buf[1024];
+	char json_data[512];
+	int ret;
+	Network n;
+	uint16_t json_len;
+	uint16_t len;
+
+	if (appkey == NULL)
+		goto exit;
+
+    if (deviceid == NULL)
+            sprintf(json_data, "{\"a\": \"%s\", \"p\":4}", appkey);
+    else
+            sprintf(json_data, "{\"a\": \"%s\", \"p\":4, \"d\": \"%s\"}", appkey, deviceid);
+
+	json_len = strlen(json_data);
+	buf[0] = 1; //version
+	buf[1] = (uint8_t)((json_len >> 8) & 0xff);
+	buf[2] = (uint8_t)(json_len & 0xff);
+	len = json_len + 3;
+	memcpy(buf + 3, json_data, json_len);
+
+	NewNetwork(&n);
+	ret = ConnectNetwork(&n, "abj-redismsg-4.yunba.io", 9944);
+	ret = n.mqttwrite(&n, buf, len, 1000);
+
+	if (ret == len) {
+		memset(buf, 0, sizeof(buf));
+		ret = n.mqttread(&n, buf, sizeof(buf), 3000);
+
+		cJSON *root = cJSON_Parse(buf);
+		if (root) {
+			int ret_size = cJSON_GetArraySize(root);
+			if (ret_size >= 4) {
+				strcpy(info->client_id, cJSON_GetObjectItem(root,"c")->valuestring);
+				strcpy(info->username, cJSON_GetObjectItem(root,"u")->valuestring);
+				strcpy(info->password, cJSON_GetObjectItem(root,"p")->valuestring);
+				strcpy(info->device_id, cJSON_GetObjectItem(root,"d")->valuestring);
+				rc = SUCCESS;
+			}
+			cJSON_Delete(root);
+		}
 	}
 	n.disconnect(&n);
 exit:

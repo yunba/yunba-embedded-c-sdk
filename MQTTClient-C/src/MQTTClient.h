@@ -84,7 +84,9 @@ int MQTTYield (Client*, int);
 int MQTTClient_get_host_v2(char *appkey, char* url);
 int MQTTClient_get_host(char *appkey, char* url);
 int MQTTClient_setup_with_appkey(char* appkey, REG_info *info);
+int MQTTClient_setup_with_appkey_v2(char* appkey, REG_info *info);
 int MQTTClient_setup_with_appkey_and_deviceid(char* appkey, char *deviceid, REG_info *info);
+int MQTTClient_setup_with_appkey_and_deviceid_v2(char* appkey, char *deviceid, REG_info *info);
 
 int MQTTSetAlias(Client*, const char*);
 int MQTTPublishToAlias(Client* c, const char* alias, void *payload, int payloadlen);
