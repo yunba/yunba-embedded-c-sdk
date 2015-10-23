@@ -827,15 +827,19 @@ int MQTTClient_get_host_v2(char *appkey, char* url)
 	if (ret == len) {
 		memset(buf, 0, sizeof(buf));
 		ret = n.mqttread(&n, buf, sizeof(buf), 3000);
-		cJSON *root = cJSON_Parse(buf);
-
-		if (root) {
-			int ret_size = cJSON_GetArraySize(root);
-			if (ret_size >= 1) {
-				strcpy(url, cJSON_GetObjectItem(root,"c")->valuestring);
-				rc = SUCCESS;
+		// packet: version number(1 byte) + json length(2 byte) + json
+		//FIXME: condition: ret > 3
+		len = (uint16_t)(((uint8_t)buf[1] << 8) | (uint8_t)buf[2]);
+		if (len == strlen(buf + 3)) {
+			cJSON *root = cJSON_Parse(buf + 3);
+			if (root) {
+				int ret_size = cJSON_GetArraySize(root);
+				if (ret_size >= 1) {
+					strcpy(url, cJSON_GetObjectItem(root,"c")->valuestring);
+					rc = SUCCESS;
+				}
+				cJSON_Delete(root);
 			}
-			cJSON_Delete(root);
 		}
 	}
 	n.disconnect(&n);
@@ -946,18 +950,21 @@ int MQTTClient_setup_with_appkey_v2(char* appkey, REG_info *info)
 	if (ret == len) {
 		memset(buf, 0, sizeof(buf));
 		ret = n.mqttread(&n, buf, sizeof(buf), 3000);
-
-		cJSON *root = cJSON_Parse(buf);
-		if (root) {
-			int ret_size = cJSON_GetArraySize(root);
-			if (ret_size >= 4) {
-				strcpy(info->client_id, cJSON_GetObjectItem(root,"c")->valuestring);
-				strcpy(info->username, cJSON_GetObjectItem(root,"u")->valuestring);
-				strcpy(info->password, cJSON_GetObjectItem(root,"p")->valuestring);
-				strcpy(info->device_id, cJSON_GetObjectItem(root,"d")->valuestring);
-				rc = SUCCESS;
+		//FIXME: condition: ret > 3
+		len = (uint16_t)(((uint8_t)buf[1] << 8) | (uint8_t)buf[2]);
+		if (len == strlen(buf + 3)) {
+			cJSON *root = cJSON_Parse(buf + 3);
+			if (root) {
+				int ret_size = cJSON_GetArraySize(root);
+				if (ret_size >= 4) {
+					strcpy(info->client_id, cJSON_GetObjectItem(root,"c")->valuestring);
+					strcpy(info->username, cJSON_GetObjectItem(root,"u")->valuestring);
+					strcpy(info->password, cJSON_GetObjectItem(root,"p")->valuestring);
+					strcpy(info->device_id, cJSON_GetObjectItem(root,"d")->valuestring);
+					rc = SUCCESS;
+				}
+				cJSON_Delete(root);
 			}
-			cJSON_Delete(root);
 		}
 	}
 	n.disconnect(&n);
@@ -1038,18 +1045,21 @@ int MQTTClient_setup_with_appkey_and_deviceid_v2(char* appkey, char *deviceid, R
 	if (ret == len) {
 		memset(buf, 0, sizeof(buf));
 		ret = n.mqttread(&n, buf, sizeof(buf), 3000);
-
-		cJSON *root = cJSON_Parse(buf);
-		if (root) {
-			int ret_size = cJSON_GetArraySize(root);
-			if (ret_size >= 4) {
-				strcpy(info->client_id, cJSON_GetObjectItem(root,"c")->valuestring);
-				strcpy(info->username, cJSON_GetObjectItem(root,"u")->valuestring);
-				strcpy(info->password, cJSON_GetObjectItem(root,"p")->valuestring);
-				strcpy(info->device_id, cJSON_GetObjectItem(root,"d")->valuestring);
-				rc = SUCCESS;
+		//FIXME: condition: ret > 3
+		len = (uint16_t)(((uint8_t)buf[1] << 8) | (uint8_t)buf[2]);
+		if (len == strlen(buf + 3)) {
+			cJSON *root = cJSON_Parse(buf + 3);
+			if (root) {
+				int ret_size = cJSON_GetArraySize(root);
+				if (ret_size >= 4) {
+					strcpy(info->client_id, cJSON_GetObjectItem(root,"c")->valuestring);
+					strcpy(info->username, cJSON_GetObjectItem(root,"u")->valuestring);
+					strcpy(info->password, cJSON_GetObjectItem(root,"p")->valuestring);
+					strcpy(info->device_id, cJSON_GetObjectItem(root,"d")->valuestring);
+					rc = SUCCESS;
+				}
+				cJSON_Delete(root);
 			}
-			cJSON_Delete(root);
 		}
 	}
 	n.disconnect(&n);
