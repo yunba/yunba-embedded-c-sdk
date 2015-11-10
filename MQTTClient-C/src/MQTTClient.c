@@ -311,7 +311,24 @@ int cycle(Client* c, Timer* timer)
             break;
         }
         case PUBCOMP:
+
             break;
+
+        case PUBREL:
+        {
+            uint64_t mypacketid;
+            unsigned char dup, type;
+             if (MQTTDeserialize_ack(&type, &dup, &mypacketid, c->readbuf, c->readbuf_size) != 1)
+                 rc = FAILURE;
+             else if ((len = MQTTSerialize_ack(c->buf, c->buf_size, PUBCOMP, 0, mypacketid)) <= 0)
+                 rc = FAILURE;
+             else if ((rc = sendPacket(c, len, timer)) != SUCCESS) // send the PUBREL packet
+                 rc = FAILURE; // there was a problem
+             if (rc == FAILURE)
+                 goto exit; // there was a problem
+         }
+        break;
+
         case PINGRESP:
             c->ping_outstanding = 0;
             break;
