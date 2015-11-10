@@ -821,7 +821,7 @@ int MQTTClient_get_host_v2(char *appkey, char* url)
 	memcpy(buf + 3, json_data, json_len);
 
 	NewNetwork(&n);
-	ret = ConnectNetwork(&n, "abj-redismsg-4.yunba.io", 9977);
+	ret = ConnectNetwork(&n, "tick-t.yunba.io", 9977);
 	ret = n.mqttwrite(&n, buf, len, 1000);
 
 	if (ret == len) {
@@ -944,7 +944,7 @@ int MQTTClient_setup_with_appkey_v2(char* appkey, REG_info *info)
 	memcpy(buf + 3, json_data, json_len);
 
 	NewNetwork(&n);
-	ret = ConnectNetwork(&n, "abj-redismsg-4.yunba.io", 9944);
+	ret = ConnectNetwork(&n, "reg-t.yunba.io", 9944);
 	ret = n.mqttwrite(&n, buf, len, 1000);
 
 	if (ret == len) {
@@ -1039,7 +1039,7 @@ int MQTTClient_setup_with_appkey_and_deviceid_v2(char* appkey, char *deviceid, R
 	memcpy(buf + 3, json_data, json_len);
 
 	NewNetwork(&n);
-	ret = ConnectNetwork(&n, "abj-redismsg-4.yunba.io", 9944);
+	ret = ConnectNetwork(&n, "reg-t.yunba.io", 9944);
 	ret = n.mqttwrite(&n, buf, len, 1000);
 
 	if (ret == len) {
