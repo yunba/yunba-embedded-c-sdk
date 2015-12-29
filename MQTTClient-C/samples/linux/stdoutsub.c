@@ -256,6 +256,7 @@ int main(int argc, char** argv)
 	signal(SIGINT, cfinish);
 	signal(SIGTERM, cfinish);
 
+
 	REG_info reg;
 	rc = MQTTClient_setup_with_appkey_and_deviceid_v2(opts.appkey, opts.deviceid, &reg);
 	printf("get reg info: client-id:%s, username:%s, password:%s, deviceid:%s\n",
@@ -288,7 +289,7 @@ int main(int argc, char** argv)
 	rc = MQTTConnect(&c, &data);
 	printf("Connected %d\n", rc);
     
-	MQTTSetCallBack(&c, messageArrived, extMessageArrive);
+	MQTTSetCallBack(&c, messageArrived, extMessageArrive, NULL);
 
 //    rc = MQTTUnsubscribe(&c, "hello");
 

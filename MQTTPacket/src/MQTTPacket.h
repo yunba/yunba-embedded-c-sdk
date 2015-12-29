@@ -141,10 +141,10 @@ int MQTTPacket_decode(int (*getcharfn)(unsigned char*, int), int* value);
 int MQTTPacket_decodeBuf(unsigned char* buf, int* value);
 
 int readInt(unsigned char** pptr);
-uint64_t readInt64(char** pptr);
+uint64_t readInt64(uint8_t** pptr);
 char readChar(unsigned char** pptr);
 void writeChar(unsigned char** pptr, char c);
-void writeInt64(char** pptr, uint64_t anInt);
+void writeInt64(unsigned char** pptr, uint64_t anInt);
 void writeInt(unsigned char** pptr, int anInt);
 int readMQTTLenString(MQTTString* mqttstring, unsigned char** pptr, unsigned char* enddata);
 void writeCString(unsigned char** pptr, const char* string);

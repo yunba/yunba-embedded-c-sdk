@@ -91,6 +91,45 @@ typedef struct MessageData
     MQTTString* topicName;
 } MessageData;
 
+typedef void (*messageHandler)(MessageData*);
+typedef void (*extendedmessageHandler)(EXTED_CMD cmd, int status, int ret_string_len, char *ret_string);
+typedef void (*mqttConnectLostHandler)(char *reaseon);
+
+typedef struct MQTTClient
+{
+    uint64_t next_packetid;
+    unsigned int command_timeout_ms;
+    size_t buf_size,
+      readbuf_size;
+    unsigned char *buf,
+      *readbuf;
+    unsigned int keepAliveInterval;
+    char ping_outstanding;
+    int isconnected;
+    uint8_t fail_conn_count;
+    struct MessageHandlers
+    {
+        const char* topicFilter;
+        void (*fp) (MessageData*);
+    } messageHandlers[MAX_MESSAGE_HANDLERS];      /* Message handlers are indexed by subscription topic */
+
+    struct ExtMessageHandlers
+    {
+    	EXTED_CMD cmd;
+    	void (*cb) (EXTED_CMD cmd, int status, int ret_string_len, char *ret_string);
+    }  extmessageHandlers[MAX_MESSAGE_HANDLERS];
+
+    void (*defaultMessageHandler) (MessageData*);
+    mqttConnectLostHandler cl;
+
+    Network* ipstack;
+    Timer ping_timer;
+#if defined(MQTT_TASK)
+	Mutex mutex;
+	Thread thread;
+#endif 
+} MQTTClient;
+
 typedef struct {
         /* in MQTT v3.1,If the Client ID contains more than 23 characters, the server responds to
          * the CONNECT message with a CONNACK return code 2: Identifier Rejected.
@@ -106,46 +145,7 @@ typedef struct {
         char device_id[200];
 } REG_info;
 
-
-typedef void (*messageHandler)(MessageData*);
-typedef void (*extendedmessageHandler)(EXTED_CMD cmd, int status, int ret_string_len, char *ret_string);
-
-typedef struct MQTTClient
-{
-    uint64_t next_packetid;
-    unsigned int command_timeout_ms;
-    size_t buf_size,
-      readbuf_size;
-    unsigned char *buf,
-      *readbuf;
-    unsigned int keepAliveInterval;
-    char ping_outstanding;
-    int isconnected;
-
-    struct MessageHandlers
-    {
-        const char* topicFilter;
-        void (*fp) (MessageData*);
-    } messageHandlers[MAX_MESSAGE_HANDLERS];      /* Message handlers are indexed by subscription topic */
-    
-    struct ExtMessageHandlers
-    {
-    	EXTED_CMD cmd;
-        void (*cb) (EXTED_CMD cmd, int status, int ret_string_len, char *ret_string);
-    } extmessageHandlers[MAX_MESSAGE_HANDLERS];      /* Message handlers are indexed by subscription topic */
-
-    void (*defaultMessageHandler) (MessageData*);
-
-    Network* ipstack;
-    Timer ping_timer;
-#if defined(MQTT_TASK)
-	Mutex mutex;
-	Thread thread;
-#endif 
-} MQTTClient;
-
 #define DefaultClient {0, 0, 0, 0, NULL, NULL, 0, 0, 0}
-
 
 /**
  * Create an MQTT client object
@@ -200,21 +200,30 @@ DLLExport int MQTTDisconnect(MQTTClient* client);
  */
 DLLExport int MQTTYield(MQTTClient* client, int time);
 
-DLLExport int MQTTClient_get_host_v2(char *appkey, char* url);
+#if defined(MQTT_TASK)
+/** MQTT start background thread for a client.  After this, MQTTYield should not be called.
+*  @param client - the client object to use
+*  @return success code
+*/
+DLLExport int MQTTStartTask(MQTTClient* client);
+#endif
+
 DLLExport int MQTTClient_get_host(char *appkey, char* url);
 DLLExport int MQTTClient_setup_with_appkey(char* appkey, REG_info *info);
-DLLExport int MQTTClient_setup_with_appkey_v2(char* appkey, REG_info *info);
 DLLExport int MQTTClient_setup_with_appkey_and_deviceid(char* appkey, char *deviceid, REG_info *info);
+DLLExport int MQTTClient_get_host_v2(char *appkey, char* url);
+DLLExport int MQTTClient_setup_with_appkey_v2(char* appkey, REG_info *info);
 DLLExport int MQTTClient_setup_with_appkey_and_deviceid_v2(char* appkey, char *deviceid, REG_info *info);
 
-DLLExport int MQTTSetAlias(MQTTClient*, const char*);
+DLLExport int MQTTSetAlias(MQTTClient* c, const char* alias);
 DLLExport int MQTTPublishToAlias(MQTTClient* c, const char* alias, void *payload, int payloadlen);
 DLLExport int MQTTReport(MQTTClient* c, const char* action, const char *data);
 DLLExport int MQTTGetAlias(MQTTClient* c, const char *param);
 DLLExport int MQTTGetTopic(MQTTClient* c, const char *parameter);
 DLLExport int MQTTGetStatus(MQTTClient* c, const char *parameter);
 DLLExport int MQTTGetAliasList(MQTTClient* c, const char *parameter);
-DLLExport int MQTTSetCallBack(MQTTClient *c, messageHandler, extendedmessageHandler);
+
+DLLExport int MQTTSetCallBack(MQTTClient *c, messageHandler cb, extendedmessageHandler ext_cb, mqttConnectLostHandler cl);
 
 DLLExport int MQTTPublish2(MQTTClient* c,
 		const char* topicName, void* payload, int payloadlen, cJSON *opt);
@@ -227,14 +236,6 @@ DLLExport int MQTTGetAliasList2(MQTTClient* c, const char *topic);
 
 DLLExport void setDefaultMessageHandler(MQTTClient*, messageHandler);
 
-
-#if defined(MQTT_TASK)
-/** MQTT start background thread for a client.  After this, MQTTYield should not be called.
-*  @param client - the client object to use
-*  @return success code
-*/
-DLLExport int MQTTStartTask(MQTTClient* client);
-#endif
 
 #if defined(__cplusplus)
      }

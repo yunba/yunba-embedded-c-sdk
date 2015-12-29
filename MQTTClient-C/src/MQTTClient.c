@@ -16,6 +16,29 @@
 #include "cJSON.h"
 #include "MQTTClient.h"
 
+static void mqttclient_disconnect_internal(MQTTClient* c);
+
+
+void mqtt_lost_call(void* parm)
+{
+	MQTTClient* c = (MQTTClient*)parm;
+	//TODO:
+	char *reason = "sent fail";
+	if (c->cl != NULL) {
+		(*(c->cl))(reason);
+	}
+}
+
+static void mqttclient_disconnect_internal(MQTTClient* client)
+{
+#if defined(MQTT_TASK)
+	ThreadStart(&client->thread, &mqtt_lost_call, client);
+#else
+	if (client->cl != NULL)
+		(*(client->cl))("reconn");
+#endif
+}
+
 static void NewMessageData(MessageData* md, MQTTString* aTopicName, MQTTMessage* aMessage) {
     md->topicName = aTopicName;
     md->message = aMessage;
@@ -23,16 +46,15 @@ static void NewMessageData(MessageData* md, MQTTString* aTopicName, MQTTMessage*
 
 
 static uint64_t getNextPacketId(MQTTClient *c) {
-    c->next_packetid = generate_uuid();
-    return c->next_packetid;
+	c->next_packetid = generate_uuid();
+	return c->next_packetid;
 }
-
 
 static int sendPacket(MQTTClient* c, int length, Timer* timer)
 {
     int rc = FAILURE, 
         sent = 0;
-    
+
     while (sent < length && !TimerIsExpired(timer))
     {
         rc = c->ipstack->mqttwrite(c->ipstack, &c->buf[sent], length, TimerLeftMS(timer));
@@ -68,6 +90,8 @@ void MQTTClientInit(MQTTClient* c, Network* network, unsigned int command_timeou
     c->ping_outstanding = 0;
     c->defaultMessageHandler = NULL;
 	c->next_packetid = 1;
+	c->fail_conn_count = 0;
+	c->cl = NULL;
     TimerInit(&c->ping_timer);
 #if defined(MQTT_TASK)
 	MutexInit(&c->mutex);
@@ -228,16 +252,21 @@ int keepalive(MQTTClient* c)
 
     if (TimerIsExpired(&c->ping_timer))
     {
-	//FIXME: If no ping response, should disconnect and try re-connecting...
-//        if (!c->ping_outstanding)
+ //       if (!c->ping_outstanding)
         {
-	    int len;
             Timer timer;
             TimerInit(&timer);
             TimerCountdownMS(&timer, 1000);
-	    len = MQTTSerialize_pingreq(c->buf, c->buf_size);
-            if (len > 0 && (rc = sendPacket(c, len, &timer)) == SUCCESS) // send the ping packet
+            int len = MQTTSerialize_pingreq(c->buf, c->buf_size);
+            if (len > 0 && (rc = sendPacket(c, len, &timer)) == SUCCESS) {// send the ping packet
                 c->ping_outstanding = 1;
+                c->fail_conn_count = 0;
+            } else {
+				if (c->fail_conn_count++ > 2)
+					mqttclient_disconnect_internal(c);
+				else
+					TimerCountdown(&c->ping_timer, 20);
+            }
         }
     }
 
@@ -680,7 +709,9 @@ int MQTTExtendedCmd(MQTTClient* c, EXTED_CMD cmd, void *payload, int payload_len
     Timer timer;
     int len = 0;
     uint64_t id = 0;
-
+#if defined(MQTT_TASK)
+	MutexLock(&c->mutex);
+#endif
     TimerInit(&timer);
     TimerCountdownMS(&timer, c->command_timeout_ms);
 
@@ -703,19 +734,28 @@ int MQTTExtendedCmd(MQTTClient* c, EXTED_CMD cmd, void *payload, int payload_len
     }
 
 exit:
+#if defined(MQTT_TASK)
+	MutexUnlock(&c->mutex);
+#endif
     return rc;
 }
 
-int MQTTSetCallBack(MQTTClient *c, messageHandler cb, extendedmessageHandler ext_cb)
+int MQTTSetCallBack(MQTTClient *c, messageHandler cb, extendedmessageHandler ext_cb, mqttConnectLostHandler cl)
 {
 	int rc = SUCCESS;
-
+#if defined(MQTT_TASK)
+	MutexLock(&c->mutex);
+#endif
 	c->extmessageHandlers[0].cmd = 1;
 	c->extmessageHandlers[0].cb = ext_cb;
 
 	c->messageHandlers[0].topicFilter = 0;
 	c->messageHandlers[0].fp = cb;
 
+	c->cl = cl;
+#if defined(MQTT_TASK)
+		MutexUnlock(&c->mutex);
+#endif
     return rc;
 }
 
