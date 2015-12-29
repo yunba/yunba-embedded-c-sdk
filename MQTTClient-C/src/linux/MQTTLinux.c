@@ -100,12 +100,18 @@ int linux_write(Network* n, unsigned char* buffer, int len, int timeout_ms)
 	return rc;
 }
 
+void linux_disconnect(Network* n)
+{
+	close(n->my_socket);
+}
+
 
 void NetworkInit(Network* n)
 {
 	n->my_socket = 0;
 	n->mqttread = linux_read;
 	n->mqttwrite = linux_write;
+	n->disconnect = linux_disconnect;
 }
 
 
@@ -171,9 +177,4 @@ uint64_t generate_uuid() {
 	uint64_t id = ms << (64 - 41);
 	id |= (uint64_t)(randm(16) % (unsigned long long int)(pow(2, (64 - 41))));
 	return id;
-}
-
-void NetworkDisconnect(Network* n)
-{
-	close(n->my_socket);
 }

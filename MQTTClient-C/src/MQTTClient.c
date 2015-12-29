@@ -195,7 +195,7 @@ int deliverMessage(MQTTClient* c, MQTTString* topicName, MQTTMessage* message)
     return rc;
 }
 
-int deliverextMessage(Client* c, EXTED_CMD cmd, int status, int ret_string_len, char *ret_string)
+int deliverextMessage(MQTTClient* c, EXTED_CMD cmd, int status, int ret_string_len, char *ret_string)
 {
 		int i;
 		int rc = SUCCESS;
@@ -233,8 +233,8 @@ int keepalive(MQTTClient* c)
         {
 	    int len;
             Timer timer;
-            InitTimer(&timer);
-            countdown_ms(&timer, 1000);
+            TimerInit(&timer);
+            TimerCountdownMS(&timer, 1000);
 	    len = MQTTSerialize_pingreq(c->buf, c->buf_size);
             if (len > 0 && (rc = sendPacket(c, len, &timer)) == SUCCESS) // send the ping packet
                 c->ping_outstanding = 1;
@@ -681,8 +681,8 @@ int MQTTExtendedCmd(MQTTClient* c, EXTED_CMD cmd, void *payload, int payload_len
     int len = 0;
     uint64_t id = 0;
 
-    InitTimer(&timer);
-    countdown_ms(&timer, c->command_timeout_ms);
+    TimerInit(&timer);
+    TimerCountdownMS(&timer, c->command_timeout_ms);
 
     if (!c->isconnected)
         goto exit;
@@ -853,8 +853,8 @@ int MQTTClient_get_host(char *appkey, char* url)
 			"POST %s HTTP/1.1\r\nHost: %s:%d\r\nAccept: application/json\r\nContent-Type: application/json\r\nContent-Length: %d\n\n%s",
 			"/", "tick.yunba.io", 9999, strlen(json_data), json_data);
 
-	NewNetwork(&n);
-	ret = ConnectNetwork(&n, "tick.yunba.io", 9999);
+	NetworkInit(&n);
+	ret = NetworkConnect(&n, "tick.yunba.io", 9999);
 	ret = n.mqttwrite(&n, buf, strlen(buf), 1000);
 
 	if (ret == strlen(buf)) {
@@ -901,8 +901,8 @@ int MQTTClient_get_host_v2(char *appkey, char* url)
 	len = json_len + 3;
 	memcpy(buf + 3, json_data, json_len);
 
-	NewNetwork(&n);
-	ret = ConnectNetwork(&n, "tick-t.yunba.io", 9977);
+	NetworkInit(&n);
+	ret = NetworkConnect(&n, "tick-t.yunba.io", 9977);
 	ret = n.mqttwrite(&n, buf, len, 1000);
 
 	if (ret == len) {
@@ -981,8 +981,8 @@ int MQTTClient_setup_with_appkey(char* appkey, REG_info *info)
 			"POST %s HTTP/1.1\r\nHost: %s:%d\r\nAccept: application/json\r\nContent-Type: application/json\r\nContent-Length: %d\n\n%s",
 			"/device/reg/", "reg.yunba.io", 8383, strlen(json_data), json_data);
 
-	NewNetwork(&n);
-	ret = ConnectNetwork(&n, "reg.yunba.io", 8383);
+	NetworkInit(&n);
+	ret = NetworkConnect(&n, "reg.yunba.io", 8383);
 	ret = n.mqttwrite(&n, buf, strlen(buf), 1000);
 
 	if (ret == strlen(buf)) {
@@ -1024,8 +1024,8 @@ int MQTTClient_setup_with_appkey_v2(char* appkey, REG_info *info)
 	len = json_len + 3;
 	memcpy(buf + 3, json_data, json_len);
 
-	NewNetwork(&n);
-	ret = ConnectNetwork(&n, "reg-t.yunba.io", 9944);
+	NetworkInit(&n);
+	ret = NetworkConnect(&n, "reg-t.yunba.io", 9944);
 	ret = n.mqttwrite(&n, buf, len, 1000);
 
 	if (ret == len) {
@@ -1073,8 +1073,8 @@ int MQTTClient_setup_with_appkey_and_deviceid(char* appkey, char *deviceid, REG_
 			"POST %s HTTP/1.1\r\nHost: %s:%d\r\nAccept: application/json\r\nContent-Type: application/json\r\nContent-Length: %d\n\n%s",
 			"/device/reg/", "reg.yunba.io", 8383, strlen(json_data), json_data);
 
-	NewNetwork(&n);
-	ret = ConnectNetwork(&n, "reg.yunba.io", 8383);
+	NetworkInit(&n);
+	ret = NetworkConnect(&n, "reg.yunba.io", 8383);
 	ret = n.mqttwrite(&n, buf, strlen(buf), 1000);
 
 	if (ret == strlen(buf)) {
@@ -1119,8 +1119,8 @@ int MQTTClient_setup_with_appkey_and_deviceid_v2(char* appkey, char *deviceid, R
 	len = json_len + 3;
 	memcpy(buf + 3, json_data, json_len);
 
-	NewNetwork(&n);
-	ret = ConnectNetwork(&n, "reg-t.yunba.io", 9944);
+	NetworkInit(&n);
+	ret = NetworkConnect(&n, "reg-t.yunba.io", 9944);
 	ret = n.mqttwrite(&n, buf, len, 1000);
 
 	if (ret == len) {

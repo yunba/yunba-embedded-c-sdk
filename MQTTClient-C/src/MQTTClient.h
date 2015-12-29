@@ -36,6 +36,7 @@
 #include "MQTTPacket.h"
 #include "stdio.h"
 #include "cJSON.h"
+#include "MQTTLinux.h"
 
 #if defined(MQTTCLIENT_PLATFORM_HEADER)
 /* The following sequence of macros converts the MQTTCLIENT_PLATFORM_HEADER value
@@ -199,7 +200,6 @@ DLLExport int MQTTDisconnect(MQTTClient* client);
  */
 DLLExport int MQTTYield(MQTTClient* client, int time);
 
-
 DLLExport int MQTTClient_get_host_v2(char *appkey, char* url);
 DLLExport int MQTTClient_get_host(char *appkey, char* url);
 DLLExport int MQTTClient_setup_with_appkey(char* appkey, REG_info *info);
@@ -226,7 +226,6 @@ DLLExport int MQTTGetStatus2(MQTTClient* c, const char *alias);
 DLLExport int MQTTGetAliasList2(MQTTClient* c, const char *topic);
 
 DLLExport void setDefaultMessageHandler(MQTTClient*, messageHandler);
-
 
 
 #if defined(MQTT_TASK)

@@ -62,6 +62,7 @@ typedef struct Network
 	int my_socket;
 	int (*mqttread) (struct Network*, unsigned char*, int, int);
 	int (*mqttwrite) (struct Network*, unsigned char*, int, int);
+	void (*disconnect) (struct Network*);
 } Network;
 
 int linux_read(Network*, unsigned char*, int, int);

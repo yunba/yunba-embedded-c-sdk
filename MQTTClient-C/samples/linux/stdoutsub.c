@@ -42,6 +42,7 @@
 */
 #include <stdio.h>
 #include "MQTTClient.h"
+#include "MQTTLinux.h"
 
 #include <stdio.h>
 #include <signal.h>
@@ -248,8 +249,9 @@ int main(int argc, char** argv)
 
 	getopts(argc, argv);	
 
+
 	Network n;
-	Client c;
+	MQTTClient c;
 
 	signal(SIGINT, cfinish);
 	signal(SIGTERM, cfinish);
@@ -263,13 +265,13 @@ int main(int argc, char** argv)
 	MQTTClient_get_host_v2(opts.appkey, url);
 	printf("get broker: %s\n", url);
 
-	NewNetwork(&n);
+	NetworkInit(&n);
 
 	char ip[100];
 	int port = 1883;
 	get_ip_pair(url, ip, &port);
-	ConnectNetwork(&n, /*opts.host*/ip, /*opts.port*/port);
-	MQTTClient(&c, &n, 1000, buf, 300, readbuf, 300);
+	NetworkConnect(&n, /*opts.host*/ip, /*opts.port*/port);
+	MQTTClientInit(&c, &n, 1000, buf, 300, readbuf, 300);
  
 	MQTTPacket_connectData data = MQTTPacket_connectData_initializer;       
 	data.willFlag = 0;
@@ -290,7 +292,7 @@ int main(int argc, char** argv)
 
 //    rc = MQTTUnsubscribe(&c, "hello");
 
-	rc = MQTTSubscribe(&c, topic, QOS1);
+	rc = MQTTSubscribe(&c, topic, QOS1, NULL);
 	printf("Subscribed %d\n", rc);
 
 	MQTTMessage M;
