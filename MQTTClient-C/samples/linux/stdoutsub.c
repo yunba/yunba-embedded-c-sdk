@@ -236,6 +236,12 @@ int main(int argc, char** argv)
 	int rc = 0;
 	unsigned char buf[200];
 	unsigned char readbuf[200];
+	char url[50];
+	REG_info reg;
+	char ip[100];
+	int port = 1883;
+	Network n;
+	MQTTClient c;
 	
 	if (argc < 2)
 		usage();
@@ -249,29 +255,32 @@ int main(int argc, char** argv)
 
 	getopts(argc, argv);	
 
-
-	Network n;
-	MQTTClient c;
-
 	signal(SIGINT, cfinish);
 	signal(SIGTERM, cfinish);
 
-
-	REG_info reg;
 	rc = MQTTClient_setup_with_appkey_and_deviceid_v2(opts.appkey, opts.deviceid, &reg);
+	if (rc == FAILURE) {
+		printf("get reg info fail \r\n");
+		return -1;
+	}
 	printf("get reg info: client-id:%s, username:%s, password:%s, deviceid:%s\n",
 			reg.client_id, reg.username, reg.password, reg.device_id);
 
-	char url[50];
-	MQTTClient_get_host_v2(opts.appkey, url);
+	rc = MQTTClient_get_host_v2(opts.appkey, url);
+	if (rc == FAILURE) {
+		printf("get broker fail\r\n");
+		return -1;
+	}
 	printf("get broker: %s\n", url);
 
 	NetworkInit(&n);
-
-	char ip[100];
-	int port = 1883;
 	get_ip_pair(url, ip, &port);
-	NetworkConnect(&n, /*opts.host*/ip, /*opts.port*/port);
+	rc = NetworkConnect(&n, /*opts.host*/ip, /*opts.port*/port);
+	if (rc != SUCCESS) {
+		printf("can't connect to broker, IP:%s,port:%d\n", ip, port);
+		return -1;
+	}
+
 	MQTTClientInit(&c, &n, 1000, buf, 300, readbuf, 300);
  
 	MQTTPacket_connectData data = MQTTPacket_connectData_initializer;       
@@ -280,18 +289,13 @@ int main(int argc, char** argv)
 	data.clientID.cstring = /*opts.clientid*/reg.client_id;
 	data.username.cstring = /*opts.username*/reg.username;
 	data.password.cstring = /*opts.password*/reg.password;
-
 	data.keepAliveInterval = 200;
 	data.cleansession = 0;
 
-	printf("Connecting to %s %d\n", /*opts.host*/ip, /*opts.port*/port);
-	
+	printf("mqtt connecting to %s %d\n", /*opts.host*/ip, /*opts.port*/port);
 	rc = MQTTConnect(&c, &data);
 	printf("Connected %d\n", rc);
-    
 	MQTTSetCallBack(&c, messageArrived, extMessageArrive, NULL);
-
-//    rc = MQTTUnsubscribe(&c, "hello");
 
 	rc = MQTTSubscribe(&c, topic, QOS1, NULL);
 	printf("Subscribed %d\n", rc);
@@ -344,7 +348,6 @@ int main(int argc, char** argv)
 //	printf("publish2_alias %d\n", rc);
 	cJSON_Delete(Opt);
 
-
 	while (!toStop)
 	{
 		MQTTYield(&c, 1000);
@@ -357,5 +360,3 @@ int main(int argc, char** argv)
 
 	return 0;
 }
-
-

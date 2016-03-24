@@ -956,8 +956,11 @@ int MQTTClient_get_host_v2(char *appkey, char* url)
 			if (root) {
 				int ret_size = cJSON_GetArraySize(root);
 				if (ret_size >= 1) {
-					strcpy(url, cJSON_GetObjectItem(root,"c")->valuestring);
-					rc = SUCCESS;
+					cJSON * pURL = cJSON_GetObjectItem(root,"c");
+					if (pURL != NULL) {
+						strcpy(url, pURL->valuestring);
+						rc = SUCCESS;
+					}
 				}
 				cJSON_Delete(root);
 			}
@@ -1078,11 +1081,18 @@ int MQTTClient_setup_with_appkey_v2(char* appkey, REG_info *info)
 			if (root) {
 				int ret_size = cJSON_GetArraySize(root);
 				if (ret_size >= 4) {
-					strcpy(info->client_id, cJSON_GetObjectItem(root,"c")->valuestring);
-					strcpy(info->username, cJSON_GetObjectItem(root,"u")->valuestring);
-					strcpy(info->password, cJSON_GetObjectItem(root,"p")->valuestring);
-					strcpy(info->device_id, cJSON_GetObjectItem(root,"d")->valuestring);
-					rc = SUCCESS;
+					cJSON * pCid = cJSON_GetObjectItem(root,"c");
+					cJSON * pUsername = cJSON_GetObjectItem(root,"u");
+					cJSON * pPassword = cJSON_GetObjectItem(root,"p");
+					cJSON * pDevid = cJSON_GetObjectItem(root,"d");
+					if (pCid != NULL && pUsername != NULL &&
+							pPassword != NULL && pDevid != NULL) {
+						strcpy(info->client_id, pCid->valuestring);
+						strcpy(info->username, pUsername->valuestring);
+						strcpy(info->password, pPassword->valuestring);
+						strcpy(info->device_id, pDevid->valuestring);
+						rc = SUCCESS;
+					}
 				}
 				cJSON_Delete(root);
 			}
@@ -1173,11 +1183,18 @@ int MQTTClient_setup_with_appkey_and_deviceid_v2(char* appkey, char *deviceid, R
 			if (root) {
 				int ret_size = cJSON_GetArraySize(root);
 				if (ret_size >= 4) {
-					strcpy(info->client_id, cJSON_GetObjectItem(root,"c")->valuestring);
-					strcpy(info->username, cJSON_GetObjectItem(root,"u")->valuestring);
-					strcpy(info->password, cJSON_GetObjectItem(root,"p")->valuestring);
-					strcpy(info->device_id, cJSON_GetObjectItem(root,"d")->valuestring);
-					rc = SUCCESS;
+					cJSON * pCid = cJSON_GetObjectItem(root,"c");
+					cJSON * pUsername = cJSON_GetObjectItem(root,"u");
+					cJSON * pPassword = cJSON_GetObjectItem(root,"p");
+					cJSON * pDevid = cJSON_GetObjectItem(root,"d");
+					if (pCid != NULL && pUsername != NULL &&
+							pPassword != NULL && pDevid != NULL) {
+						strcpy(info->client_id, pCid->valuestring);
+						strcpy(info->username, pUsername->valuestring);
+						strcpy(info->password, pPassword->valuestring);
+						strcpy(info->device_id, pDevid->valuestring);
+						rc = SUCCESS;
+					}
 				}
 				cJSON_Delete(root);
 			}
