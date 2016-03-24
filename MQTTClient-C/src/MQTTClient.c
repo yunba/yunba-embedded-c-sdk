@@ -877,7 +877,6 @@ int MQTTPublish2ToAlias(MQTTClient* c,
 	return MQTTPublish2(c, buf, payload, payloadlen, opt);
 }
 
-
 int MQTTClient_get_host(char *appkey, char* url)
 {
 	int rc = FAILURE;
@@ -904,14 +903,18 @@ int MQTTClient_get_host(char *appkey, char* url)
 	//	if (ret > 0) {
 			temp = strstr(buf, "\r\n\r\n");
 			if (temp) {
-				char *p, *q;
 				temp += 4;
-				p= strstr(temp, ":");
-				q = strstr(temp, "}");
-				if (p && q) {
-					p += 2;
-					sprintf(url, "%.*s", q-p-1, p);
-					rc = SUCCESS;
+				cJSON *root = cJSON_Parse(temp);
+				if (root) {
+					int ret_size = cJSON_GetArraySize(root);
+					if (ret_size >= 1) {
+						cJSON * pURL = cJSON_GetObjectItem(root,"c");
+						if (pURL != NULL) {
+							strcpy(url, pURL->valuestring);
+							rc = SUCCESS;
+						}
+					}
+					cJSON_Delete(root);
 				}
 	//		}
 		}
@@ -971,43 +974,6 @@ exit:
 	return rc;
 }
 
-
-static int get_reg_info_from_json(char *json, REG_info *info)
-{
-	int ru = FAILURE, rp = FAILURE, rc = FAILURE, rd = FAILURE;
-	char *u, *p, *c, *d;
-
-	u = strstr(json, "\"u\": \"");
-	if (u) {
-		u += 6;
-		sprintf(info->username, "%.*s",19, u);
-		ru = SUCCESS;
-	}
-
-	p = strstr(json, "\"p\": \"");
-	if (p) {
-		p += 6;
-		sprintf(info->password, "%.*s",13, p);
-		rp = SUCCESS;
-	}
-
-	c = strstr(json, "\"c\": \"");
-	if (c) {
-		c += 6;
-		sprintf(info->client_id, "%.*s",23, c);
-		rc = SUCCESS;
-	}
-
-	d = strstr(json, "\"d\": \"");
-	if (d) {
-		d += 6;
-		sprintf(info->device_id, "%.*s",32, d);
-		rd = SUCCESS;
-	}
-
-	return ((rc == SUCCESS && ru == SUCCESS && rp == SUCCESS && rc == SUCCESS)? SUCCESS : FAILURE);
-}
-
 int MQTTClient_setup_with_appkey(char* appkey, REG_info *info)
 {
 	int rc = FAILURE;
@@ -1036,7 +1002,25 @@ int MQTTClient_setup_with_appkey(char* appkey, REG_info *info)
 			temp = strstr(buf, "\r\n\r\n");
 			if (temp) {
 				temp += 4;
-				rc = get_reg_info_from_json(temp, info);
+				cJSON *root = cJSON_Parse(temp);
+				if (root) {
+					int ret_size = cJSON_GetArraySize(root);
+					if (ret_size >= 4) {
+						cJSON * pCid = cJSON_GetObjectItem(root,"c");
+						cJSON * pUsername = cJSON_GetObjectItem(root,"u");
+						cJSON * pPassword = cJSON_GetObjectItem(root,"p");
+						cJSON * pDevid = cJSON_GetObjectItem(root,"d");
+						if (pCid != NULL && pUsername != NULL &&
+								pPassword != NULL && pDevid != NULL) {
+							strcpy(info->client_id, pCid->valuestring);
+							strcpy(info->username, pUsername->valuestring);
+							strcpy(info->password, pPassword->valuestring);
+							strcpy(info->device_id, pDevid->valuestring);
+							rc = SUCCESS;
+						}
+					}
+					cJSON_Delete(root);
+				}
 			}
 //		}
 	}
@@ -1135,7 +1119,25 @@ int MQTTClient_setup_with_appkey_and_deviceid(char* appkey, char *deviceid, REG_
 			temp = strstr(buf, "\r\n\r\n");
 			if (temp) {
 				temp += 4;
-				rc = get_reg_info_from_json(temp, info);
+				cJSON *root = cJSON_Parse(temp);
+				if (root) {
+					int ret_size = cJSON_GetArraySize(root);
+					if (ret_size >= 4) {
+						cJSON * pCid = cJSON_GetObjectItem(root,"c");
+						cJSON * pUsername = cJSON_GetObjectItem(root,"u");
+						cJSON * pPassword = cJSON_GetObjectItem(root,"p");
+						cJSON * pDevid = cJSON_GetObjectItem(root,"d");
+						if (pCid != NULL && pUsername != NULL &&
+								pPassword != NULL && pDevid != NULL) {
+							strcpy(info->client_id, pCid->valuestring);
+							strcpy(info->username, pUsername->valuestring);
+							strcpy(info->password, pPassword->valuestring);
+							strcpy(info->device_id, pDevid->valuestring);
+							rc = SUCCESS;
+						}
+					}
+					cJSON_Delete(root);
+				}
 			}
 //		}
 	}
