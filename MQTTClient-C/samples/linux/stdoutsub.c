@@ -233,6 +233,7 @@ static int get_ip_pair(const char *url, char *addr, int *port)
 int main(int argc, char** argv)
 {
 	int rc = 0;
+    int topic_filter = 0;
 	unsigned char buf[200];
 	unsigned char readbuf[200];
 	
@@ -243,8 +244,15 @@ int main(int argc, char** argv)
 
 	if (strchr(topic, '#') || strchr(topic, '+'))
 		opts.showtopics = 1;
-	if (opts.showtopics)
-		printf("topic is %s\n", topic);
+	if (opts.showtopics) {
+        printf("Topic is \"%s\".\n", topic);
+        topic_filter = 1;
+    }
+
+    if (topic_filter) {
+        printf("It is a \"topic filter\", so MQTTPublish() and  MQTTPublish2() will not be demonstrated.\n");
+        printf("More information: http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/errata01/os/mqtt-v3.1.1-errata01-os-complete.html#_Toc442180919\n\n");
+    }
 
 	getopts(argc, argv);	
 
@@ -300,8 +308,11 @@ int main(int argc, char** argv)
 	M.payload = temp;
 	M.id = 1000;
 	M.payloadlen = strlen(temp);
-	rc = MQTTPublish(&c, topic, &M);
-	printf("published %d\n", rc);
+
+    if (!topic_filter) {
+        rc = MQTTPublish(&c, topic, &M);
+        printf("published %d\n", rc);
+    }
 
 	rc = MQTTSetAlias(&c, "Jerry");
 	printf("set alias %d\n", rc);
@@ -335,8 +346,10 @@ int main(int argc, char** argv)
 	cJSON_AddStringToObject(Opt,"time_to_live",  "120");
 	cJSON_AddStringToObject(Opt,"time_delay",  "1100");
 	cJSON_AddStringToObject(Opt,"apn_json",  "{\"aps\":{\"alert\":\"FENCE alarm\", \"sound\":\"alarm.mp3\"}}");
-	rc = MQTTPublish2(&c, topic, "test_publish2Tohelloworld", strlen("test_publish2Tohelloworld"), Opt);
-//	printf("publish2 %d\n", rc);
+    if (!topic_filter) {
+        rc = MQTTPublish2(&c, topic, "test_publish2Tohelloworld", strlen("test_publish2Tohelloworld"), Opt);
+        printf("publish2 %d\n", rc);
+    }
 //	rc = MQTTPublish2ToAlias(&c, "Jerry", "test_publish2ToAlias", strlen("test_publish2ToAlias"), Opt);
 //	printf("publish2_alias %d\n", rc);
 	cJSON_Delete(Opt);
