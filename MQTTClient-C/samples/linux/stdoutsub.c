@@ -350,8 +350,8 @@ int main(int argc, char** argv)
         rc = MQTTPublish2(&c, topic, "test_publish2Tohelloworld", strlen("test_publish2Tohelloworld"), Opt);
         printf("publish2 %d\n", rc);
     }
-//	rc = MQTTPublish2ToAlias(&c, "Jerry", "test_publish2ToAlias", strlen("test_publish2ToAlias"), Opt);
-//	printf("publish2_alias %d\n", rc);
+	rc = MQTTPublish2ToAlias(&c, "Jerry", "test_publish2ToAlias", strlen("test_publish2ToAlias"), Opt);
+	printf("publish2_alias %d\n", rc);
 	cJSON_Delete(Opt);
 
 
