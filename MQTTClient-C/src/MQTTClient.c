@@ -18,6 +18,8 @@
 #include "cJSON.h"
 #include "MQTTClient.h"
 
+#define MAX_TOPIC_BUF_SIZE (128 + 16)
+
 void NewMessageData(MessageData* md, MQTTString* aTopicName, MQTTMessage* aMessgage) {
     md->topicName = aTopicName;
     md->message = aMessgage;
@@ -563,7 +565,7 @@ int MQTTSetAlias(Client* c, const char* alias)
 {
 	int rc = 0;
 	/*TODO: buffer size ?? */
-	char temp[100];
+	char temp[MAX_TOPIC_BUF_SIZE];
 	MQTTMessage M;
 	M.qos = 1;
 	strcpy(temp, alias);
@@ -578,7 +580,7 @@ int MQTTPublishToAlias(Client* c, const char* alias, void *payload, int payloadl
 {
 	int rc = 0;
 	/*TODO: buffer size ?? */
-	char topic[100];
+	char topic[MAX_TOPIC_BUF_SIZE];
 	MQTTMessage M;
 	M.qos = 1;
 	sprintf(topic, ",yta/%s", alias);
@@ -597,7 +599,7 @@ int MQTTReport(Client* c, const char* action, const char *data)
 {
 	int rc = 0;
 	/*TODO: buffer size ?? */
-	char topic[100];
+	char topic[MAX_TOPIC_BUF_SIZE];
 	MQTTMessage M;
 	M.qos = 1;
 	M.payload = (void *)data;
