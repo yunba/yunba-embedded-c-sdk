@@ -20,6 +20,12 @@
 
 #define MAX_TOPIC_BUF_SIZE (128 + 16)
 
+static char reg_url[20] = "reg.yunba.io";
+static char reg_url_v2[20] = "reg-t.yunba.io";
+static int reg_port = 8383;
+static int reg_port_v2 = 9944;
+
+
 void NewMessageData(MessageData* md, MQTTString* aTopicName, MQTTMessage* aMessgage) {
     md->topicName = aTopicName;
     md->message = aMessgage;
@@ -908,10 +914,10 @@ int MQTTClient_setup_with_appkey(char* appkey, REG_info *info)
 	sprintf(json_data, "{\"a\": \"%s\", \"p\":4}", appkey);\
 	sprintf(buf,
 			"POST %s HTTP/1.1\r\nHost: %s:%d\r\nAccept: application/json\r\nContent-Type: application/json\r\nContent-Length: %d\n\n%s",
-			"/device/reg/", "reg.yunba.io", 8383, strlen(json_data), json_data);
+			"/device/reg/", reg_url, reg_port, strlen(json_data), json_data);
 
 	NewNetwork(&n);
-	ret = ConnectNetwork(&n, "reg.yunba.io", 8383);
+	ret = ConnectNetwork(&n, reg_url, reg_port);
 	ret = n.mqttwrite(&n, buf, strlen(buf), 1000);
 
 	if (ret == strlen(buf)) {
@@ -929,6 +935,18 @@ int MQTTClient_setup_with_appkey(char* appkey, REG_info *info)
 	n.disconnect(&n);
 exit:
 	return rc;
+}
+
+void set_reg_url(const char url[20], int port)
+{
+    strncpy(reg_url, url, 20);
+    reg_port = port;
+}
+
+void set_reg_url_v2(const char url[20], int port)
+{
+    strncpy(reg_url_v2, url, 20);
+    reg_port_v2 = port;
 }
 
 int MQTTClient_setup_with_appkey_v2(char* appkey, REG_info *info)
@@ -954,7 +972,7 @@ int MQTTClient_setup_with_appkey_v2(char* appkey, REG_info *info)
 	memcpy(buf + 3, json_data, json_len);
 
 	NewNetwork(&n);
-	ret = ConnectNetwork(&n, "reg-t.yunba.io", 9944);
+	ret = ConnectNetwork(&n, reg_url_v2, reg_port_v2);
 	ret = n.mqttwrite(&n, buf, len, 1000);
 
 	if (ret == len) {
@@ -1000,10 +1018,10 @@ int MQTTClient_setup_with_appkey_and_deviceid(char* appkey, char *deviceid, REG_
 
 	sprintf(buf,
 			"POST %s HTTP/1.1\r\nHost: %s:%d\r\nAccept: application/json\r\nContent-Type: application/json\r\nContent-Length: %d\n\n%s",
-			"/device/reg/", "reg.yunba.io", 8383, strlen(json_data), json_data);
+			"/device/reg/", reg_url, reg_port, strlen(json_data), json_data);
 
 	NewNetwork(&n);
-	ret = ConnectNetwork(&n, "reg.yunba.io", 8383);
+	ret = ConnectNetwork(&n, reg_url, reg_port);
 	ret = n.mqttwrite(&n, buf, strlen(buf), 1000);
 
 	if (ret == strlen(buf)) {
@@ -1049,7 +1067,7 @@ int MQTTClient_setup_with_appkey_and_deviceid_v2(char* appkey, char *deviceid, R
 	memcpy(buf + 3, json_data, json_len);
 
 	NewNetwork(&n);
-	ret = ConnectNetwork(&n, "reg-t.yunba.io", 9944);
+	ret = ConnectNetwork(&n, reg_url_v2, reg_port_v2);
 	ret = n.mqttwrite(&n, buf, len, 1000);
 
 	if (ret == len) {

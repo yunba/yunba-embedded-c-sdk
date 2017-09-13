@@ -106,6 +106,9 @@ int MQTTGetTopic2(Client* c, const char *alias);
 int MQTTGetStatus2(Client* c, const char *alias);
 int MQTTGetAliasList2(Client* c, const char *topic);
 
+void set_reg_url(const char url[20], int port);
+void set_reg_url_v2(const char url[20], int port);
+
 void setDefaultMessageHandler(Client*, messageHandler);
 
 void MQTTClient(Client*, Network*, unsigned int, unsigned char*, size_t, unsigned char*, size_t);
