@@ -232,11 +232,12 @@ int main(int argc, char **argv) {
     signal(SIGTERM, cfinish);
 
     REG_info reg;
-    rc = MQTTClient_setup_with_appkey_and_deviceid_v2(opts.appkey, opts.deviceid, &reg);
+    
+    rc = MQTTClient_setup_with_appkey_and_deviceid(opts.appkey, opts.deviceid, &reg);
     printf("get reg info: client-id:%s, username:%s, password:%s, deviceid:%s\n",
            reg.client_id, reg.username, reg.password, reg.device_id);
 
-    char url[50];
+    char url[50] = "tcp://23.91.101.68:1883";
     MQTTClient_get_host_v2(opts.appkey, url);
     printf("get broker: %s\n", url);
 

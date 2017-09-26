@@ -183,7 +183,10 @@ int deliverMessage(Client* c, MQTTString* topicName, MQTTMessage* message)
 
                 MessageData md;
                 NewMessageData(&md, topicName, message);
-                c->messageHandlers[0].fp(&md);
+                if(NULL != c->messageHandlers[0].fp)
+                {
+                    c->messageHandlers[0].fp(&md);
+                }
                 rc = SUCCESS;
             }
         }
@@ -289,6 +292,13 @@ int cycle(Client* c, Timer* timer)
                (unsigned char**)&msg.payload, (int*)&msg.payloadlen, c->readbuf, c->readbuf_size) != 1)
                 goto exit;
             deliverMessage(c, &topicName, &msg);
+            //reset timer after devliver message, so you won't timeout because of deliver message
+            if(NULL != timer && NULL != c)
+            {
+                InitTimer(timer);
+                countdown_ms(timer, c->command_timeout_ms);
+            }
+
             if (msg.qos != QOS0)
             {
                 if (msg.qos == QOS1)
