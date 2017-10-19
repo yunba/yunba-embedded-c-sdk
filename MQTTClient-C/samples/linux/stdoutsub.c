@@ -264,6 +264,8 @@ int main(int argc, char **argv) {
     rc = MQTTConnect(&c, &data);
     printf("Connected %d\n", rc);
 
+    return 0;
+
     MQTTSetCallBack(&c, messageArrived, extMessageArrive);
 
 //    rc = MQTTUnsubscribe(&c, "hello");
