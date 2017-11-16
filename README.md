@@ -1,4 +1,7 @@
+
 # Eclipse Paho MQTT C/C++ client for Embedded platforms
+
+**Warnning: 这个sdk仅仅实现了大部分mqtt协议需要的内容，但是有部分比较重要的功能，如断线重连等机制，以及特定嵌入式环境的tcp读写，并没有在sdk中实现，需要用户自行实现。**
 
 This repository contains the source code for the [Eclipse Paho](http://eclipse.org/paho) MQTT C/C++ client library for Embedded platorms.
 
@@ -45,3 +48,5 @@ cd MQTTClient-C/samples/linux
 ./build.sh
 
 ./stdoutsub topic --appkey <appkey>
+
+
