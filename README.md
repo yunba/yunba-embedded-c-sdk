@@ -3,6 +3,8 @@
 
 **Warnning: 这个sdk仅仅实现了大部分mqtt协议需要的内容，但是有部分比较重要的功能，如断线重连等机制，以及特定嵌入式环境的tcp读写，并没有在sdk中实现，需要用户自行实现。**
 
+**声明：对于自行修改 sdk 而导致的问题，云巴恕不提供技术支持。如果对于 sdk 有个性化需求，可以联系商务定制开发：xieting@yunba.io**
+
 This repository contains the source code for the [Eclipse Paho](http://eclipse.org/paho) MQTT C/C++ client library for Embedded platorms.
 
 It is dual licensed under the EPL and EDL (see about.html and notice.html for more details).  You can choose which of these licenses you want to use the code under.  The EDL allows you to embed the code into your application, and distribute your application in binary or source form without contributing any of your code, or any changes you make back to Paho.  See the EDL for the exact conditions.
